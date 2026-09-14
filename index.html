@@ -200,34 +200,52 @@ async function connectToSupabase() {
   const statusElement = document.getElementById("supabaseStatus");
 
   try {
-    const { data: sessionData, error: sessionError } =
-      await db.auth.getSession();
-
-    if (sessionError) throw sessionError;
-
-    if (sessionData.session) {
-      currentAuthUser = sessionData.session.user;
-    } else {
-      const { data, error } = await db.auth.signInAnonymously();
-      if (error) throw error;
-      currentAuthUser = data.user;
+    if (statusElement) {
+      statusElement.textContent = "● Verifying Supabase authentication…";
+      statusElement.style.color = "#8fa6bf";
     }
 
+    /*
+      getUser() checks the current identity against the Supabase Auth
+      server. This is stronger than getSession(), which can read an old
+      session from browser storage without proving the user still exists.
+    */
+    let { data: userData, error: userError } = await db.auth.getUser();
+
+    if (!userData?.user) {
+      /* Clear any stale browser-only session before creating a new user. */
+      await db.auth.signOut({ scope: "local" });
+
+      const { data: signInData, error: signInError } =
+        await db.auth.signInAnonymously();
+
+      if (signInError) throw signInError;
+      if (!signInData?.user) throw new Error("Anonymous sign-in returned no user.");
+
+      /* Verify that the newly-created user really exists on the Auth server. */
+      const verification = await db.auth.getUser();
+      if (verification.error) throw verification.error;
+      if (!verification.data?.user) throw new Error("Supabase could not verify the anonymous user.");
+
+      currentAuthUser = verification.data.user;
+    } else {
+      currentAuthUser = userData.user;
+    }
+
+    const shortId = currentAuthUser.id.slice(0, 8);
+
     if (statusElement) {
-      statusElement.textContent = "● Supabase connected";
+      statusElement.textContent = "● Supabase authenticated • " + shortId;
       statusElement.style.color = "#5ee28a";
     }
 
-    console.log(
-      "Draft Night connected to Supabase as:",
-      currentAuthUser.id
-    );
+    console.log("Verified Supabase Auth user:", currentAuthUser);
 
   } catch (error) {
-    console.error("Supabase connection failed:", error);
+    console.error("Supabase authentication failed:", error);
 
     if (statusElement) {
-      statusElement.textContent = "● Supabase connection failed";
+      statusElement.textContent = "● Supabase auth failed: " + (error.message || "Unknown error");
       statusElement.style.color = "#ff7878";
     }
   }

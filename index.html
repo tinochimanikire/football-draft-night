@@ -2,12 +2,14 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Football Draft Night</title>
 
     <style>
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -19,9 +21,21 @@
             background: #07111f;
             color: white;
             min-height: 100vh;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        /* -------------------- */
+        /* LOBBY */
+        /* -------------------- */
+
+        #lobbyScreen {
+            min-height: 100vh;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
         }
 
         .container {
@@ -33,7 +47,7 @@
         .logo {
             font-size: 14px;
             letter-spacing: 4px;
-            color: #8fa6bf;
+            color: #7aa9d6;
             margin-bottom: 20px;
         }
 
@@ -48,15 +62,14 @@
             margin-bottom: 50px;
         }
 
-        .draft-card {
+        .card {
             background: #101d2e;
             border: 1px solid #263b52;
             border-radius: 16px;
             padding: 35px;
-            margin-bottom: 30px;
         }
 
-        .round {
+        .green-label {
             color: #5ee28a;
             font-size: 14px;
             letter-spacing: 2px;
@@ -64,17 +77,7 @@
             margin-bottom: 12px;
         }
 
-        .clock {
-            font-size: 34px;
-            margin-bottom: 8px;
-        }
-
-        .instruction {
-            color: #9baabd;
-            margin-bottom: 30px;
-        }
-
-        button {
+        .main-button {
             background: #5ee28a;
             color: #07111f;
             border: none;
@@ -82,11 +85,26 @@
             padding: 15px 28px;
             font-size: 16px;
             font-weight: bold;
-            cursor: pointer;
         }
 
-        button:hover {
+        .main-button:hover {
             background: #7cf09f;
+        }
+
+        #joinPanel {
+            display: none;
+            margin-top: 25px;
+        }
+
+        #gmName {
+            padding: 14px;
+            width: 260px;
+            border-radius: 8px;
+            border: 1px solid #263b52;
+            background: #07111f;
+            color: white;
+            font-size: 16px;
+            margin-right: 8px;
         }
 
         .players {
@@ -117,10 +135,179 @@
             font-size: 13px;
         }
 
-        @media (max-width: 650px) {
+
+        /* -------------------- */
+        /* DRAFT ROOM */
+        /* -------------------- */
+
+        #draftScreen {
+            display: none;
+            padding: 30px;
+        }
+
+        .draft-container {
+            max-width: 1250px;
+            margin: auto;
+        }
+
+        .draft-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .draft-title {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .commissioner {
+            color: #8fa6bf;
+            font-size: 14px;
+        }
+
+
+        /* ON THE CLOCK */
+
+        .clock-panel {
+            background: #101d2e;
+            border: 1px solid #263b52;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .round-info {
+            color: #5ee28a;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .on-clock {
+            font-size: 38px;
+            margin: 10px 0;
+        }
+
+        .pick-info {
+            color: #9baabd;
+        }
+
+
+        /* DRAFT ORDER */
+
+        .order-panel {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .order-card {
+            flex: 1;
+            background: #0c1725;
+            border: 1px solid #263b52;
+            border-radius: 10px;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .order-card.active {
+            border: 2px solid #5ee28a;
+            background: #122639;
+        }
+
+        .pick-number {
+            color: #6e849b;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+
+        /* MAIN GRID */
+
+        .draft-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: #101d2e;
+            border: 1px solid #263b52;
+            border-radius: 15px;
+            padding: 22px;
+        }
+
+        .panel-title {
+            font-size: 15px;
+            letter-spacing: 1px;
+            margin-bottom: 18px;
+            color: #b9c8d8;
+        }
+
+
+        /* CATEGORIES */
+
+        .category {
+            padding: 13px;
+            margin-bottom: 10px;
+            border: 1px solid #263b52;
+            border-radius: 8px;
+            background: #0c1725;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .category:hover {
+            border-color: #5ee28a;
+            transform: translateX(3px);
+        }
+
+        .category-number {
+            color: #5ee28a;
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+
+        /* DRAFT BOARD */
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            color: #8fa6bf;
+            padding: 12px;
+            border-bottom: 1px solid #263b52;
+        }
+
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #1c3044;
+        }
+
+        .empty-pick {
+            color: #53677d;
+        }
+
+
+        @media (max-width: 800px) {
 
             h1 {
-                font-size: 38px;
+                font-size: 40px;
+            }
+
+            .draft-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .order-panel {
+                flex-direction: column;
             }
 
             .players {
@@ -131,11 +318,28 @@
             .player {
                 width: 100%;
             }
+
+            .draft-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
         }
+
     </style>
+
 </head>
 
+
 <body>
+
+
+<!-- ======================================== -->
+<!-- LOBBY SCREEN -->
+<!-- ======================================== -->
+
+<div id="lobbyScreen">
 
     <div class="container">
 
@@ -149,67 +353,64 @@
             Three managers. One prediction board. No duplicate picks.
         </p>
 
-        <div class="draft-card">
+        <div class="card">
 
-            <div class="round">
+            <div class="green-label">
                 DRAFT LOBBY
             </div>
 
-            <div class="clock">
+            <h2 style="margin-bottom:10px;">
                 Waiting for Managers
-            </div>
+            </h2>
 
-            <p class="instruction">
-                The draft will begin when all three GMs are ready.
+            <p style="color:#9baabd; margin-bottom:25px;">
+                Enter the War Room and prepare for the draft.
             </p>
 
-           <button id="enterButton">
-    ENTER WAR ROOM
-</button>
+            <button
+                id="enterButton"
+                class="main-button">
+                ENTER WAR ROOM
+            </button>
 
-<div id="joinPanel" style="display:none; margin-top:25px;">
 
-    <input
-        id="gmName"
-        type="text"
-        placeholder="Enter your GM name"
-        style="
-            padding:14px;
-            width:250px;
-            border-radius:8px;
-            border:1px solid #263b52;
-            background:#07111f;
-            color:white;
-            font-size:16px;
-            margin-right:8px;
-        "
-    >
+            <div id="joinPanel">
 
-    <button id="joinButton">
-        JOIN DRAFT
-    </button>
+                <input
+                    id="gmName"
+                    type="text"
+                    placeholder="Enter your GM name">
 
-    <p id="welcomeMessage"
-       style="margin-top:20px; color:#5ee28a;">
-    </p>
+                <button
+                    id="joinButton"
+                    class="main-button">
+                    JOIN DRAFT
+                </button>
 
-</div>
+            </div>
+
 
             <div class="players">
 
                 <div class="player">
                     <strong>GM 1</strong>
-                    <div class="status">● READY</div>
+                    <div class="status">
+                        ● WAITING
+                    </div>
                 </div>
 
                 <div class="player">
                     <strong>GM 2</strong>
-                    <div class="status">● READY</div>
+                    <div class="status">
+                        ● WAITING
+                    </div>
                 </div>
 
                 <div class="player">
                     <strong>GM 3</strong>
-                    <div class="status">● READY</div>
+                    <div class="status">
+                        ● WAITING
+                    </div>
                 </div>
 
             </div>
@@ -221,41 +422,347 @@
         </footer>
 
     </div>
+
+</div>
+
+
+
+<!-- ======================================== -->
+<!-- DRAFT ROOM -->
+<!-- ======================================== -->
+
+<div id="draftScreen">
+
+    <div class="draft-container">
+
+        <div class="draft-header">
+
+            <div>
+                <div class="logo" style="margin-bottom:5px;">
+                    FOOTBALL INTELLIGENCE DRAFT
+                </div>
+
+                <div class="draft-title">
+                    Draft Room
+                </div>
+            </div>
+
+            <div class="commissioner">
+                Signed in as:
+                <strong id="displayGM"></strong>
+            </div>
+
+        </div>
+
+
+        <!-- ON THE CLOCK -->
+
+        <div class="clock-panel">
+
+            <div class="round-info">
+                ROUND 1 • PICK 1
+            </div>
+
+            <div class="on-clock">
+                <span id="clockName"></span> IS ON THE CLOCK
+            </div>
+
+            <div class="pick-info">
+                Select a category to open the first round.
+            </div>
+
+        </div>
+
+
+        <!-- DRAFT ORDER -->
+
+        <div class="order-panel">
+
+            <div class="order-card active">
+
+                <div class="pick-number">
+                    PICK 1
+                </div>
+
+                <strong id="orderGM1">
+                    GM 1
+                </strong>
+
+            </div>
+
+
+            <div class="order-card">
+
+                <div class="pick-number">
+                    PICK 2
+                </div>
+
+                <strong>
+                    GM 2
+                </strong>
+
+            </div>
+
+
+            <div class="order-card">
+
+                <div class="pick-number">
+                    PICK 3
+                </div>
+
+                <strong>
+                    GM 3
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="draft-grid">
+
+
+            <!-- CATEGORY POOL -->
+
+            <div class="panel">
+
+                <div class="panel-title">
+                    AVAILABLE CATEGORIES
+                </div>
+
+                <div class="category">
+                    <span class="category-number">01</span>
+                    Player of the Year
+                </div>
+
+                <div class="category">
+                    <span class="category-number">02</span>
+                    Manager of the Year
+                </div>
+
+                <div class="category">
+                    <span class="category-number">03</span>
+                    Premier League Champions
+                </div>
+
+                <div class="category">
+                    <span class="category-number">04</span>
+                    Champions League Winners
+                </div>
+
+                <div class="category">
+                    <span class="category-number">05</span>
+                    Golden Boot
+                </div>
+
+                <div class="category">
+                    <span class="category-number">06</span>
+                    Best Signing
+                </div>
+
+                <div class="category">
+                    <span class="category-number">07</span>
+                    Biggest Flop
+                </div>
+
+                <div class="category">
+                    <span class="category-number">08</span>
+                    Breakout Player
+                </div>
+
+            </div>
+
+
+            <!-- DRAFT BOARD -->
+
+            <div class="panel">
+
+                <div class="panel-title">
+                    LIVE DRAFT BOARD
+                </div>
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Category</th>
+
+                            <th id="boardGM1">
+                                GM 1
+                            </th>
+
+                            <th>GM 2</th>
+
+                            <th>GM 3</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        <tr>
+                            <td>Player of the Year</td>
+                            <td class="empty-pick">—</td>
+                            <td class="empty-pick">—</td>
+                            <td class="empty-pick">—</td>
+                        </tr>
+
+                        <tr>
+                            <td>Manager of the Year</td>
+                            <td class="empty-pick">—</td>
+                            <td class="empty-pick">—</td>
+                            <td class="empty-pick">—</td>
+                        </tr>
+
+                        <tr>
+                            <td>PL Champions</td>
+                            <td class="empty-pick">—</td>
+                            <td class="empty-pick">—</td>
+                            <td class="empty-pick">—</td>
+                        </tr>
+
+                        <tr>
+                            <td>Champions League</td>
+                            <td class="empty-pick">—</td>
+                            <td class="empty-pick">—</td>
+                            <td class="empty-pick">—</td>
+                        </tr>
+
+                        <tr>
+                            <td>Golden Boot</td>
+                            <td class="empty-pick">—</td>
+                            <td class="empty-pick">—</td>
+                            <td class="empty-pick">—</td>
+                        </tr>
+
+                        <tr>
+                            <td>Best Signing</td>
+                            <td class="empty-pick">—</td>
+                            <td class="empty-pick">—</td>
+                            <td class="empty-pick">—</td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
 <script>
 
-    const enterButton = document.getElementById("enterButton");
-    const joinPanel = document.getElementById("joinPanel");
-    const joinButton = document.getElementById("joinButton");
-    const gmName = document.getElementById("gmName");
-    const welcomeMessage = document.getElementById("welcomeMessage");
+    const enterButton =
+        document.getElementById("enterButton");
 
-    enterButton.addEventListener("click", function () {
+    const joinPanel =
+        document.getElementById("joinPanel");
 
-        joinPanel.style.display = "block";
-        enterButton.style.display = "none";
+    const joinButton =
+        document.getElementById("joinButton");
 
-    });
+    const gmName =
+        document.getElementById("gmName");
 
-    joinButton.addEventListener("click", function () {
+    const lobbyScreen =
+        document.getElementById("lobbyScreen");
 
-        const name = gmName.value.trim();
+    const draftScreen =
+        document.getElementById("draftScreen");
 
-        if (name === "") {
+    const displayGM =
+        document.getElementById("displayGM");
 
-            alert("Enter your GM name first.");
-            return;
+    const clockName =
+        document.getElementById("clockName");
+
+    const orderGM1 =
+        document.getElementById("orderGM1");
+
+    const boardGM1 =
+        document.getElementById("boardGM1");
+
+
+    /* Open the name entry box */
+
+    enterButton.addEventListener(
+        "click",
+        function () {
+
+            enterButton.style.display = "none";
+
+            joinPanel.style.display = "block";
+
+            gmName.focus();
 
         }
+    );
 
-        welcomeMessage.textContent =
-            "Welcome to the War Room, GM " + name + ".";
 
-        joinButton.style.display = "none";
-        gmName.style.display = "none";
+    /* Join the draft */
 
-    });
+    joinButton.addEventListener(
+        "click",
+        function () {
+
+            const name =
+                gmName.value.trim();
+
+            if (name === "") {
+
+                alert(
+                    "Enter your GM name first."
+                );
+
+                return;
+
+            }
+
+
+            displayGM.textContent = name;
+
+            clockName.textContent = name;
+
+            orderGM1.textContent = name;
+
+            boardGM1.textContent = name;
+
+
+            lobbyScreen.style.display = "none";
+
+            draftScreen.style.display = "block";
+
+        }
+    );
+
+
+    /* Allow ENTER key */
+
+    gmName.addEventListener(
+        "keypress",
+        function (event) {
+
+            if (event.key === "Enter") {
+
+                joinButton.click();
+
+            }
+
+        }
+    );
 
 </script>
+
+
 </body>
 
 </html>

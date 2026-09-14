@@ -27,7 +27,7 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
 .choice-card h3{margin-bottom:8px}.choice-card p{color:#8fa6bf;font-size:14px;line-height:1.5;margin-bottom:18px}
 .form-panel{margin-top:22px;text-align:left}.field{margin-bottom:15px}.field label{display:block;color:#a8b6c7;font-size:13px;margin-bottom:7px}
 .field input,.nominee-input{width:100%;padding:14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:white;font-size:16px}
-.field input:focus,.nominee-input:focus{outline:none;border-color:var(--green)}.form-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.field input:focus,.nominee-input:focus{outline:none;border-color:var(--green)}.nominee-select{width:100%;padding:14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:white;font-size:16px}.nominee-select:focus{outline:none;border-color:var(--green)}.selection-help{font-size:11px;color:#6e849b;margin-top:8px;line-height:1.4}.form-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
 .error{color:var(--red);font-size:13px;margin-top:14px;min-height:18px}.success{color:var(--green)}footer{margin-top:36px;color:#53677d;font-size:13px}
 
 /* Lobby room */
@@ -170,8 +170,12 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
         <div id="actionSub" class="action-sub"></div>
         <div class="action-row">
           <input id="nomineeInput" class="nominee-input" maxlength="80" placeholder="Enter nominee">
+          <select id="nomineeSelect" class="nominee-select hidden">
+            <option value="">Select nominee…</option>
+          </select>
           <button id="lockPickButton" class="main-button">LOCK IN PICK</button>
         </div>
+        <div id="selectionHelp" class="selection-help"></div>
         <label id="exclusiveLockRow" class="lock-row hidden">
           <input id="exclusiveLockCheckbox" type="checkbox">
           <span id="exclusiveLockText">Use my Exclusive Lock on this selection.</span>
@@ -190,6 +194,7 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
 
       <div class="panel board-panel">
         <div class="board-actions">
+          <button id="undoPickButton" class="danger-button hidden">UNDO LAST ACTION</button>
           <button id="refreshDraftButton" class="secondary-button">REFRESH BOARD</button>
           <button id="copyDraftCodeButton" class="secondary-button">COPY CODE</button>
         </div>
@@ -220,6 +225,60 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TBenfZNlYs-e2bEvHxacfA_LbOQjmpx
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
 });
+
+/* =========================================================
+   CANONICAL CLUB LISTS — 2026/27
+   ========================================================= */
+const EPL_CLUBS = [
+  "AFC Bournemouth","Arsenal","Aston Villa","Brentford","Brighton & Hove Albion",
+  "Chelsea","Coventry City","Crystal Palace","Everton","Fulham","Hull City",
+  "Ipswich Town","Leeds United","Liverpool","Manchester City","Manchester United",
+  "Newcastle United","Nottingham Forest","Sunderland","Tottenham Hotspur"
+];
+
+const UCL_CLUBS = [
+  "AEK Athens","Arsenal","Aston Villa","Atlético de Madrid","Barcelona","Bayern München",
+  "Bodø/Glimt","Borussia Dortmund","Club Brugge","Como","Fenerbahçe","Feyenoord",
+  "Galatasaray","Inter","LASK","Leipzig","Lens","Lille","Liverpool","Manchester City",
+  "Manchester United","Napoli","Paris Saint-Germain","Porto","PSV","Real Betis",
+  "Real Madrid","Roma","Sabah","Shakhtar Donetsk","Slavia Praha","Slovan Bratislava",
+  "Sporting CP","Stuttgart","Viking","Villarreal"
+];
+
+const UEL_CLUBS = [
+  "Anderlecht","Ararat-Armenia","AZ Alkmaar","Benfica","Beşiktaş","AFC Bournemouth",
+  "Celje","Celta Vigo","Celtic","Crystal Palace","Dinamo Zagreb","Ferencváros",
+  "Hapoel Be'er Sheva","Hoffenheim","Jagiellonia Białystok","Juventus","Bayer Leverkusen",
+  "Lech Poznań","Levski Sofia","Lillestrøm","Lyon","Marseille","Milan","NEC Nijmegen",
+  "OFI Crete","Olympiacos","Omonia","Real Sociedad","Rennes","Salzburg","Sparta Praha",
+  "Sturm Graz","Sunderland","Torreense","Union Saint-Gilloise","Viktoria Plzeň"
+];
+
+const UECL_CLUBS = [
+  "Aarhus","Ajax","Atalanta","Borac Banja Luka","Braga","Brann","Copenhagen",
+  "Crvena Zvezda","CSKA Sofia","Egnatia","Freiburg","Gent","Getafe","Hajduk Split",
+  "Hearts","Iberia Tbilisi","Inter Escaldes","Jablonec","Kairat Almaty","Kauno Žalgiris",
+  "KuPS Kuopio","Lincoln Red Imps","Lugano","Midtjylland","Mjällby","Monaco",
+  "Nordsjælland","Pafos","Panathinaikos","Riga","Sint-Truidense","Thun","Trabzonspor",
+  "Twente","Universitatea Craiova","Brighton & Hove Albion"
+];
+
+const SERIE_A_CLUBS = [
+  "Atalanta","Bologna","Cagliari","Como","Fiorentina","Frosinone","Genoa","Inter",
+  "Juventus","Lazio","Lecce","Milan","Monza","Napoli","Parma","Roma","Sassuolo",
+  "Torino","Udinese","Venezia"
+];
+
+const CLUB_OPTIONS_BY_CATEGORY = {
+  "EPL Champions": EPL_CLUBS,
+  "EPL Top 5 Teams": EPL_CLUBS,
+  "Relegated Teams": EPL_CLUBS,
+  "UCL Champions": UCL_CLUBS,
+  "UCL Runners-up": UCL_CLUBS,
+  "UEL Winners": UEL_CLUBS,
+  "UEFA Conference League Winners": UECL_CLUBS,
+  "Serie A Champions": SERIE_A_CLUBS
+};
 
 let currentAuthUser=null;
 let currentGame=null;
@@ -502,9 +561,93 @@ async function copyGameCode(messageId){
 function renderDraft(){
   $("draftGameName").textContent=currentGame.game_name;$("draftGameCode").textContent=currentGame.game_code;$("draftUserName").textContent=currentPlayer.display_name;$("draftSeat").textContent=currentPlayer.seat_number;
   $("boardSeat1").textContent=playerBySeat(1)?.display_name||"Seat 1";$("boardSeat2").textContent=playerBySeat(2)?.display_name||"Seat 2";$("boardSeat3").textContent=playerBySeat(3)?.display_name||"Seat 3";
+  const isCommissioner=currentGame.commissioner_user_id===currentAuthUser?.id;
+  $("undoPickButton").classList.toggle("hidden",!isCommissioner || currentGame.status!=="drafting");
   const state=currentTurnState();
   $("draftCompleteBanner").classList.toggle("hidden",!state?.complete);
   renderClock(state);renderOrder(state);renderCategories(state);renderBoard();
+}
+
+function normaliseFreeText(value){
+  return value.trim().replace(/\s+/g," ");
+}
+function canonicalOptionsForCategory(cat){
+  return cat ? (CLUB_OPTIONS_BY_CATEGORY[cat.category_name] || null) : null;
+}
+function eligibleCanonicalOptions(cat,state){
+  let options=[...(canonicalOptionsForCategory(cat)||[])];
+  if(!cat || !state) return options;
+  const catPicks=categoryPicks(cat.id);
+
+  if(cat.category_type==="unique" || cat.category_type==="multi_unique"){
+    const used=new Set(catPicks.map(p=>p.nominee));
+    options=options.filter(x=>!used.has(x));
+  }
+
+  if(cat.category_type==="ranked_positional"){
+    const myUsed=new Set(catPicks.filter(p=>p.player_id===currentPlayer.id).map(p=>p.nominee));
+    const samePosition=new Set(catPicks.filter(p=>p.position_number===state.positionNumber).map(p=>p.nominee));
+    const locked=new Set(catPicks.filter(p=>p.exclusive_lock).map(p=>p.nominee));
+    options=options.filter(x=>!myUsed.has(x)&&!samePosition.has(x)&&!locked.has(x));
+
+    if($("exclusiveLockCheckbox")?.checked){
+      const usedByOthers=new Set(catPicks.filter(p=>p.player_id!==currentPlayer.id).map(p=>p.nominee));
+      options=options.filter(x=>!usedByOthers.has(x));
+    }
+  }
+
+  if(cat.category_name==="EPL Top 5 Teams"){
+    const relegation=categories.find(c=>c.category_name==="Relegated Teams");
+    if(relegation){
+      const mine=new Set(categoryPicks(relegation.id).filter(p=>p.player_id===currentPlayer.id).map(p=>p.nominee));
+      options=options.filter(x=>!mine.has(x));
+    }
+    if(state.positionNumber===1){
+      const champion=categories.find(c=>c.category_name==="EPL Champions");
+      const linked=champion ? pickFor(champion.id,currentPlayer.id,null) : null;
+      if(linked) options=options.filter(x=>x===linked.nominee);
+    }
+  }
+
+  if(cat.category_name==="Relegated Teams"){
+    const top5=categories.find(c=>c.category_name==="EPL Top 5 Teams");
+    if(top5){
+      const mine=new Set(categoryPicks(top5.id).filter(p=>p.player_id===currentPlayer.id).map(p=>p.nominee));
+      options=options.filter(x=>!mine.has(x));
+    }
+  }
+
+  if(cat.category_name==="EPL Champions"){
+    const top5=categories.find(c=>c.category_name==="EPL Top 5 Teams");
+    const linked=top5 ? picks.find(p=>p.category_id===top5.id&&p.player_id===currentPlayer.id&&p.position_number===1) : null;
+    if(linked) options=options.filter(x=>x===linked.nominee);
+  }
+
+  if(cat.category_name==="UCL Champions" || cat.category_name==="UCL Runners-up"){
+    const otherName=cat.category_name==="UCL Champions"?"UCL Runners-up":"UCL Champions";
+    const other=categories.find(c=>c.category_name===otherName);
+    const otherPick=other ? pickFor(other.id,currentPlayer.id,null) : null;
+    if(otherPick) options=options.filter(x=>x!==otherPick.nominee);
+  }
+
+  return options;
+}
+function configureNomineeControl(state){
+  const cat=state?.activeCategory;
+  const input=$("nomineeInput"), select=$("nomineeSelect"), help=$("selectionHelp");
+  const canonical=canonicalOptionsForCategory(cat);
+  if(canonical){
+    const previous=select.value;
+    const options=eligibleCanonicalOptions(cat,state);
+    select.innerHTML='<option value="">Select club…</option>'+options.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
+    if(options.includes(previous)) select.value=previous;
+    input.classList.add("hidden");select.classList.remove("hidden");
+    help.textContent="Choose from the official 2026/27 competition list. This prevents spelling variants from bypassing duplicate rules.";
+  }else{
+    select.classList.add("hidden");input.classList.remove("hidden");
+    input.placeholder=cat?.category_type==="ranked_positional"?"Enter club":"Enter nominee";
+    help.textContent="Free-text category: spelling is normalised for spaces, but use the player's or manager's standard name.";
+  }
 }
 
 function renderClock(state){
@@ -531,8 +674,8 @@ function renderClock(state){
 
   if(isMe){
     action.classList.remove("hidden");$("actionTitle").textContent="YOUR PICK — "+cat.category_name;$("actionSub").textContent=state.positionLabel?("You are selecting: "+state.positionLabel):"Enter your nominee and lock it in.";
-    $("nomineeInput").placeholder=cat.category_type==="ranked_positional"?"Enter club":"Enter nominee";
-    renderExclusiveLock(state);setTimeout(()=>$("nomineeInput").focus(),40);
+    renderExclusiveLock(state);configureNomineeControl(state);
+    setTimeout(()=>{ if(!$("nomineeSelect").classList.contains("hidden")) $("nomineeSelect").focus(); else $("nomineeInput").focus(); },40);
   }
 }
 
@@ -547,6 +690,11 @@ function renderExclusiveLock(state){
   if(isFinal){box.checked=true;box.disabled=true;text.textContent="Final selection — your Exclusive Lock will be applied automatically.";}
   else text.textContent="Use my Exclusive Lock on this selection. Nobody else may use this nominee anywhere in this category.";
 }
+
+$("exclusiveLockCheckbox").addEventListener("change",()=>{
+  const state=currentTurnState();
+  if(state?.mode==="pick" && state.expectedSeat===currentPlayer?.seat_number) configureNomineeControl(state);
+});
 
 function renderOrder(state){
   const panel=$("draftOrderPanel");panel.innerHTML="";if(!state||state.complete) return;
@@ -585,15 +733,18 @@ async function selectCategory(cat){
 
 $("lockPickButton").addEventListener("click",submitPick);
 $("nomineeInput").addEventListener("keydown",e=>{if(e.key==="Enter") submitPick();});
+$("nomineeSelect").addEventListener("keydown",e=>{if(e.key==="Enter") submitPick();});
 async function submitPick(){
-  const nominee=$("nomineeInput").value.trim();if(!nominee) return showDraftMessage("Enter a nominee before locking in the pick.",true);
+  const usingSelect=!$("nomineeSelect").classList.contains("hidden");
+  const nominee=usingSelect ? $("nomineeSelect").value : normaliseFreeText($("nomineeInput").value);
+  if(!nominee) return showDraftMessage("Choose or enter a nominee before locking in the pick.",true);
   const state=currentTurnState();if(!state||state.mode!=="pick"||state.expectedSeat!==currentPlayer.seat_number) return showDraftMessage("It is not your turn.",true);
   $("lockPickButton").disabled=true;$("lockPickButton").textContent="LOCKING…";
   const exclusive=$("exclusiveLockCheckbox").checked;
   const res=await db.rpc("submit_draft_pick",{p_game_id:currentGame.id,p_nominee:nominee,p_exclusive_lock:exclusive});
   $("lockPickButton").disabled=false;$("lockPickButton").textContent="LOCK IN PICK";
   if(res.error){showDraftMessage(res.error.message,true);return;}
-  $("nomineeInput").value="";$("exclusiveLockCheckbox").checked=false;showDraftMessage("Pick locked in.",false,true);await loadFullState();
+  $("nomineeInput").value="";$("nomineeSelect").value="";$("exclusiveLockCheckbox").checked=false;showDraftMessage("Pick locked in.",false,true);await loadFullState();
 }
 function showDraftMessage(text,bad=false,good=false){
   const el=$("draftMessage");el.textContent=text||"";el.className="draft-message"+(bad?" bad":good?" good":"");
@@ -625,6 +776,18 @@ function addBoardRow(cat,label,positionNumber){
   }
   $("draftBoardBody").appendChild(tr);
 }
+
+$("undoPickButton").addEventListener("click",async()=>{
+  if(!currentGame || currentGame.commissioner_user_id!==currentAuthUser?.id) return;
+  const ok=confirm("Undo the most recent draft action? If the current category has no picks yet, this will cancel that category selection.");
+  if(!ok) return;
+  $("undoPickButton").disabled=true;$("undoPickButton").textContent="UNDOING…";
+  const res=await db.rpc("commissioner_undo_last_action",{p_game_id:currentGame.id});
+  $("undoPickButton").disabled=false;$("undoPickButton").textContent="UNDO LAST ACTION";
+  if(res.error){showDraftMessage(res.error.message,true);return;}
+  showDraftMessage(res.data?.message||"Last action undone.",false,true);
+  await loadFullState();
+});
 
 $("refreshDraftButton").addEventListener("click",()=>loadFullState());
 

@@ -163,9 +163,37 @@
                 The draft will begin when all three GMs are ready.
             </p>
 
-            <button>
-                ENTER WAR ROOM
-            </button>
+           <button id="enterButton">
+    ENTER WAR ROOM
+</button>
+
+<div id="joinPanel" style="display:none; margin-top:25px;">
+
+    <input
+        id="gmName"
+        type="text"
+        placeholder="Enter your GM name"
+        style="
+            padding:14px;
+            width:250px;
+            border-radius:8px;
+            border:1px solid #263b52;
+            background:#07111f;
+            color:white;
+            font-size:16px;
+            margin-right:8px;
+        "
+    >
+
+    <button id="joinButton">
+        JOIN DRAFT
+    </button>
+
+    <p id="welcomeMessage"
+       style="margin-top:20px; color:#5ee28a;">
+    </p>
+
+</div>
 
             <div class="players">
 
@@ -193,7 +221,41 @@
         </footer>
 
     </div>
+<script>
 
+    const enterButton = document.getElementById("enterButton");
+    const joinPanel = document.getElementById("joinPanel");
+    const joinButton = document.getElementById("joinButton");
+    const gmName = document.getElementById("gmName");
+    const welcomeMessage = document.getElementById("welcomeMessage");
+
+    enterButton.addEventListener("click", function () {
+
+        joinPanel.style.display = "block";
+        enterButton.style.display = "none";
+
+    });
+
+    joinButton.addEventListener("click", function () {
+
+        const name = gmName.value.trim();
+
+        if (name === "") {
+
+            alert("Enter your GM name first.");
+            return;
+
+        }
+
+        welcomeMessage.textContent =
+            "Welcome to the War Room, GM " + name + ".";
+
+        joinButton.style.display = "none";
+        gmName.style.display = "none";
+
+    });
+
+</script>
 </body>
 
 </html>

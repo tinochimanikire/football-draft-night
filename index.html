@@ -89,7 +89,8 @@ h1{font-size:40px}
     <div class="card">
       <div class="green-label">DRAFT LOBBY</div>
       <h2 style="margin-bottom:10px">Waiting for Managers</h2>
-      <p style="color:#9baabd;margin-bottom:25px">Enter the War Room and prepare for the draft.</p>
+      <p style="color:#9baabd;margin-bottom:18px">Enter the War Room and prepare for the draft.</p>
+      <div id="supabaseStatus" style="font-size:12px;color:#8fa6bf;margin-bottom:18px">Connecting to Supabase…</div>
       <button id="enterButton" class="main-button">ENTER WAR ROOM</button>
       <div id="joinPanel">
         <input id="gmName" type="text" placeholder="Enter your GM name">
@@ -168,7 +169,76 @@ h1{font-size:40px}
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
+/* ========================================
+   SUPABASE CONNECTION
+   ======================================== */
+
+const SUPABASE_URL =
+  "https://glydtiuzgzzwzziddkxl.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_TBenfZNlYs-e2bEvHxacfA_LbOQjmpx";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true
+    }
+  }
+);
+
+let currentAuthUser = null;
+
+async function connectToSupabase() {
+  const statusElement = document.getElementById("supabaseStatus");
+
+  try {
+    const { data: sessionData, error: sessionError } =
+      await db.auth.getSession();
+
+    if (sessionError) throw sessionError;
+
+    if (sessionData.session) {
+      currentAuthUser = sessionData.session.user;
+    } else {
+      const { data, error } = await db.auth.signInAnonymously();
+      if (error) throw error;
+      currentAuthUser = data.user;
+    }
+
+    if (statusElement) {
+      statusElement.textContent = "● Supabase connected";
+      statusElement.style.color = "#5ee28a";
+    }
+
+    console.log(
+      "Draft Night connected to Supabase as:",
+      currentAuthUser.id
+    );
+
+  } catch (error) {
+    console.error("Supabase connection failed:", error);
+
+    if (statusElement) {
+      statusElement.textContent = "● Supabase connection failed";
+      statusElement.style.color = "#ff7878";
+    }
+  }
+}
+
+connectToSupabase();
+
+/* ========================================
+   LOCAL DRAFT ENGINE
+   ======================================== */
+
 const categoryDefs = [
   {id:"epl_champions", name:"EPL Champions", group:"ENGLISH PREMIER LEAGUE", type:"standard"},
   {id:"epl_top5", name:"EPL Top 5 Teams", group:"ENGLISH PREMIER LEAGUE", type:"ranked", positions:["1st","2nd","3rd","4th","5th"], exclusive:true, linksChampion:true},

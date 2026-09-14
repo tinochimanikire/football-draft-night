@@ -295,7 +295,56 @@
             color: #53677d;
         }
 
+.nominee-panel {
+    display: none;
+    margin-top: 22px;
+}
 
+.selected-category {
+    color: #5ee28a;
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+#nomineeInput {
+    width: 280px;
+    max-width: 100%;
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px solid #263b52;
+    background: #07111f;
+    color: white;
+    font-size: 16px;
+    margin-right: 8px;
+}
+
+.validation-message {
+    min-height: 20px;
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+.category.active-category {
+    border: 2px solid #5ee28a;
+    background: #123025;
+}
+
+.category.used {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.category.locked {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.category.used:hover,
+.category.locked:hover {
+    transform: none;
+    border-color: #263b52;
+}
         @media (max-width: 800px) {
 
             h1 {
@@ -459,17 +508,39 @@
 
         <div class="clock-panel">
 
-            <div class="round-info">
-                ROUND 1 • PICK 1
-            </div>
+            <div class="round-info" id="roundInfo">
+    ROUND 1 • PICK 1
+</div>
 
-            <div class="on-clock">
-                <span id="clockName"></span> IS ON THE CLOCK
-            </div>
+<div class="on-clock">
+    <span id="clockName"></span> IS ON THE CLOCK
+</div>
 
-            <div class="pick-info">
-                Select a category to open the first round.
-            </div>
+<div class="pick-info" id="pickInfo">
+    Select a category to open the first round.
+</div>
+
+<div id="nomineePanel" class="nominee-panel">
+
+    <div id="selectedCategory" class="selected-category"></div>
+
+    <input
+        id="nomineeInput"
+        type="text"
+        placeholder="Enter nominee">
+
+    <button
+        id="submitPickButton"
+        class="main-button">
+        LOCK IN PICK
+    </button>
+
+    <div
+        id="validationMessage"
+        class="validation-message">
+    </div>
+
+</div>
 
         </div>
 
@@ -601,51 +672,8 @@
 
                     </thead>
 
-                    <tbody>
-
-                        <tr>
-                            <td>Player of the Year</td>
-                            <td class="empty-pick">—</td>
-                            <td class="empty-pick">—</td>
-                            <td class="empty-pick">—</td>
-                        </tr>
-
-                        <tr>
-                            <td>Manager of the Year</td>
-                            <td class="empty-pick">—</td>
-                            <td class="empty-pick">—</td>
-                            <td class="empty-pick">—</td>
-                        </tr>
-
-                        <tr>
-                            <td>PL Champions</td>
-                            <td class="empty-pick">—</td>
-                            <td class="empty-pick">—</td>
-                            <td class="empty-pick">—</td>
-                        </tr>
-
-                        <tr>
-                            <td>Champions League</td>
-                            <td class="empty-pick">—</td>
-                            <td class="empty-pick">—</td>
-                            <td class="empty-pick">—</td>
-                        </tr>
-
-                        <tr>
-                            <td>Golden Boot</td>
-                            <td class="empty-pick">—</td>
-                            <td class="empty-pick">—</td>
-                            <td class="empty-pick">—</td>
-                        </tr>
-
-                        <tr>
-                            <td>Best Signing</td>
-                            <td class="empty-pick">—</td>
-                            <td class="empty-pick">—</td>
-                            <td class="empty-pick">—</td>
-                        </tr>
-
-                    </tbody>
+                   <tbody id="draftBoardBody">
+</tbody>
 
                 </table>
 
@@ -659,7 +687,62 @@
 
 
 
-<script>
+   <script>
+
+    /* ========================================
+       GAME DATA
+       ======================================== */
+
+    const categories = [
+
+        "Player of the Year",
+        "Manager of the Year",
+        "Premier League Champions",
+        "Champions League Winners",
+        "Golden Boot",
+        "Best Signing",
+        "Biggest Flop",
+        "Breakout Player"
+
+    ];
+
+
+    let players = [
+        "GM 1",
+        "GM 2",
+        "GM 3"
+    ];
+
+
+    let roundIndex = 0;
+
+    let pickIndex = 0;
+
+    let currentCategory = null;
+
+
+    const completedCategories =
+        new Set();
+
+
+    const picks = {};
+
+    categories.forEach(
+        function(category) {
+
+            picks[category] = [
+                null,
+                null,
+                null
+            ];
+
+        }
+    );
+
+
+    /* ========================================
+       PAGE ELEMENTS
+       ======================================== */
 
     const enterButton =
         document.getElementById("enterButton");
@@ -685,22 +768,85 @@
     const clockName =
         document.getElementById("clockName");
 
-    const orderGM1 =
-        document.getElementById("orderGM1");
+    const roundInfo =
+        document.getElementById("roundInfo");
 
-    const boardGM1 =
-        document.getElementById("boardGM1");
+    const pickInfo =
+        document.getElementById("pickInfo");
+
+    const nomineePanel =
+        document.getElementById("nomineePanel");
+
+    const nomineeInput =
+        document.getElementById("nomineeInput");
+
+    const submitPickButton =
+        document.getElementById("submitPickButton");
+
+    const selectedCategory =
+        document.getElementById("selectedCategory");
+
+    const validationMessage =
+        document.getElementById("validationMessage");
+
+    const draftBoardBody =
+        document.getElementById("draftBoardBody");
+
+    const categoryElements =
+        document.querySelectorAll(".category");
+
+    const orderCards =
+        document.querySelectorAll(".order-card");
+
+    const boardHeaders =
+        document.querySelectorAll("thead th");
 
 
-    /* Open the name entry box */
+    /* ========================================
+       DRAFT ORDER
+       ======================================== */
+
+    function getRoundOrder() {
+
+        const firstPicker =
+            roundIndex % 3;
+
+        return [
+
+            firstPicker,
+
+            (firstPicker + 1) % 3,
+
+            (firstPicker + 2) % 3
+
+        ];
+
+    }
+
+
+    function getCurrentPlayerIndex() {
+
+        const order =
+            getRoundOrder();
+
+        return order[pickIndex];
+
+    }
+
+
+    /* ========================================
+       LOBBY
+       ======================================== */
 
     enterButton.addEventListener(
         "click",
-        function () {
+        function() {
 
-            enterButton.style.display = "none";
+            enterButton.style.display =
+                "none";
 
-            joinPanel.style.display = "block";
+            joinPanel.style.display =
+                "block";
 
             gmName.focus();
 
@@ -708,11 +854,9 @@
     );
 
 
-    /* Join the draft */
-
     joinButton.addEventListener(
         "click",
-        function () {
+        function() {
 
             const name =
                 gmName.value.trim();
@@ -728,28 +872,28 @@
             }
 
 
-            displayGM.textContent = name;
+            players[0] = name;
 
-            clockName.textContent = name;
-
-            orderGM1.textContent = name;
-
-            boardGM1.textContent = name;
+            displayGM.textContent =
+                name;
 
 
-            lobbyScreen.style.display = "none";
+            lobbyScreen.style.display =
+                "none";
 
-            draftScreen.style.display = "block";
+            draftScreen.style.display =
+                "block";
+
+
+            renderDraft();
 
         }
     );
 
 
-    /* Allow ENTER key */
-
     gmName.addEventListener(
         "keypress",
-        function (event) {
+        function(event) {
 
             if (event.key === "Enter") {
 
@@ -759,6 +903,530 @@
 
         }
     );
+
+
+    /* ========================================
+       CATEGORY SELECTION
+       ======================================== */
+
+    categoryElements.forEach(
+        function(element, index) {
+
+            element.addEventListener(
+                "click",
+                function() {
+
+                    const category =
+                        categories[index];
+
+
+                    /* Only Pick 1 can
+                       choose a category */
+
+                    if (pickIndex !== 0) {
+
+                        return;
+
+                    }
+
+
+                    /* A category is already
+                       open for this round */
+
+                    if (currentCategory !== null) {
+
+                        return;
+
+                    }
+
+
+                    /* Category already used */
+
+                    if (
+                        completedCategories.has(
+                            category
+                        )
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    currentCategory =
+                        category;
+
+
+                    validationMessage.textContent =
+                        "";
+
+
+                    renderDraft();
+
+
+                    nomineeInput.focus();
+
+                }
+            );
+
+        }
+    );
+
+
+    /* ========================================
+       SUBMIT PICK
+       ======================================== */
+
+    submitPickButton.addEventListener(
+        "click",
+        function() {
+
+            const nominee =
+                nomineeInput.value.trim();
+
+
+            if (currentCategory === null) {
+
+                return;
+
+            }
+
+
+            if (nominee === "") {
+
+                validationMessage.style.color =
+                    "#ff7878";
+
+                validationMessage.textContent =
+                    "Enter a nominee before locking in the pick.";
+
+                return;
+
+            }
+
+
+            /* Check for duplicate nominee
+               inside THIS category */
+
+            const duplicate =
+                picks[currentCategory]
+                    .filter(Boolean)
+                    .some(
+                        function(existingPick) {
+
+                            return (
+                                existingPick
+                                    .toLowerCase()
+                                ===
+                                nominee
+                                    .toLowerCase()
+                            );
+
+                        }
+                    );
+
+
+            if (duplicate) {
+
+                validationMessage.style.color =
+                    "#ff7878";
+
+                validationMessage.textContent =
+                    nominee +
+                    " has already been drafted in this category.";
+
+                return;
+
+            }
+
+
+            const playerIndex =
+                getCurrentPlayerIndex();
+
+
+            picks[currentCategory][playerIndex] =
+                nominee;
+
+
+            nomineeInput.value =
+                "";
+
+
+            validationMessage.textContent =
+                "";
+
+
+            pickIndex++;
+
+
+            /* Three picks completes
+               the round */
+
+            if (pickIndex === 3) {
+
+                completedCategories.add(
+                    currentCategory
+                );
+
+
+                roundIndex++;
+
+                pickIndex = 0;
+
+                currentCategory = null;
+
+            }
+
+
+            renderDraft();
+
+        }
+    );
+
+
+    nomineeInput.addEventListener(
+        "keypress",
+        function(event) {
+
+            if (event.key === "Enter") {
+
+                submitPickButton.click();
+
+            }
+
+        }
+    );
+
+
+    /* ========================================
+       RENDER DRAFT
+       ======================================== */
+
+    function renderDraft() {
+
+        if (
+            roundIndex >=
+            categories.length
+        ) {
+
+            renderCompleteDraft();
+
+            return;
+
+        }
+
+
+        const order =
+            getRoundOrder();
+
+
+        const currentPlayerIndex =
+            getCurrentPlayerIndex();
+
+
+        const currentPlayer =
+            players[currentPlayerIndex];
+
+
+        /* ROUND INFORMATION */
+
+        roundInfo.textContent =
+            "ROUND " +
+            (roundIndex + 1) +
+            " • PICK " +
+            (pickIndex + 1);
+
+
+        clockName.textContent =
+            currentPlayer;
+
+
+        /* DRAFT ORDER */
+
+        orderCards.forEach(
+            function(card, position) {
+
+                const playerIndex =
+                    order[position];
+
+
+                const nameElement =
+                    card.querySelector(
+                        "strong"
+                    );
+
+
+                nameElement.textContent =
+                    players[playerIndex];
+
+
+                if (
+                    position === pickIndex
+                ) {
+
+                    card.classList.add(
+                        "active"
+                    );
+
+                }
+
+                else {
+
+                    card.classList.remove(
+                        "active"
+                    );
+
+                }
+
+            }
+        );
+
+
+        /* CATEGORY / PICK MESSAGE */
+
+        if (currentCategory === null) {
+
+            pickInfo.textContent =
+                currentPlayer +
+                ", choose a category to open this round.";
+
+
+            nomineePanel.style.display =
+                "none";
+
+        }
+
+        else {
+
+            pickInfo.textContent =
+                "Current Category: " +
+                currentCategory;
+
+
+            selectedCategory.textContent =
+                currentCategory;
+
+
+            nomineePanel.style.display =
+                "block";
+
+
+            nomineeInput.placeholder =
+                currentPlayer +
+                "'s nominee";
+
+        }
+
+
+        renderCategories();
+
+        renderBoard();
+
+    }
+
+
+    /* ========================================
+       CATEGORY DISPLAY
+       ======================================== */
+
+    function renderCategories() {
+
+        categoryElements.forEach(
+            function(element, index) {
+
+                const category =
+                    categories[index];
+
+
+                element.classList.remove(
+                    "used",
+                    "locked",
+                    "active-category"
+                );
+
+
+                if (
+                    completedCategories.has(
+                        category
+                    )
+                ) {
+
+                    element.classList.add(
+                        "used"
+                    );
+
+                }
+
+                else if (
+                    category ===
+                    currentCategory
+                ) {
+
+                    element.classList.add(
+                        "active-category"
+                    );
+
+                }
+
+                else if (
+                    currentCategory !== null
+                    ||
+                    pickIndex !== 0
+                ) {
+
+                    element.classList.add(
+                        "locked"
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* ========================================
+       DRAFT BOARD
+       ======================================== */
+
+    function renderBoard() {
+
+        /* Player names */
+
+        boardHeaders[1].textContent =
+            players[0];
+
+        boardHeaders[2].textContent =
+            players[1];
+
+        boardHeaders[3].textContent =
+            players[2];
+
+
+        draftBoardBody.innerHTML =
+            "";
+
+
+        categories.forEach(
+            function(category) {
+
+                const row =
+                    document.createElement(
+                        "tr"
+                    );
+
+
+                const categoryCell =
+                    document.createElement(
+                        "td"
+                    );
+
+
+                categoryCell.textContent =
+                    category;
+
+
+                row.appendChild(
+                    categoryCell
+                );
+
+
+                picks[category].forEach(
+                    function(pick) {
+
+                        const cell =
+                            document.createElement(
+                                "td"
+                            );
+
+
+                        if (pick) {
+
+                            cell.textContent =
+                                pick;
+
+                        }
+
+                        else {
+
+                            cell.textContent =
+                                "—";
+
+                            cell.classList.add(
+                                "empty-pick"
+                            );
+
+                        }
+
+
+                        row.appendChild(
+                            cell
+                        );
+
+                    }
+                );
+
+
+                draftBoardBody.appendChild(
+                    row
+                );
+
+            }
+        );
+
+    }
+
+
+    /* ========================================
+       DRAFT COMPLETE
+       ======================================== */
+
+    function renderCompleteDraft() {
+
+        roundInfo.textContent =
+            "FINAL BOARD";
+
+
+        document.querySelector(
+            ".on-clock"
+        ).textContent =
+            "DRAFT COMPLETE";
+
+
+        pickInfo.textContent =
+            "Every category has been drafted.";
+
+
+        nomineePanel.style.display =
+            "none";
+
+
+        orderCards.forEach(
+            function(card) {
+
+                card.classList.remove(
+                    "active"
+                );
+
+            }
+        );
+
+
+        categoryElements.forEach(
+            function(element) {
+
+                element.classList.add(
+                    "used"
+                );
+
+            }
+        );
+
+
+        renderBoard();
+
+    }
 
 </script>
 

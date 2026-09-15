@@ -67,6 +67,16 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
 .archive-list{display:grid;gap:12px;margin-top:18px;max-height:55vh;overflow:auto}.archive-item{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:left;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center}.archive-item-title{font-weight:bold;font-size:16px}.archive-item-meta{font-size:12px;color:#8fa6bf;line-height:1.55;margin-top:5px}.status-pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:10px;font-weight:bold;letter-spacing:.8px;margin-left:7px;color:#b8c6d3}.status-pill.archived{border-color:#6b5a24;color:#f4d77a;background:#211d0d}.status-pill.live{border-color:#2f7550;color:var(--green);background:#10271f}.next-season-note{margin-top:10px;padding:12px;border-radius:10px;background:#0c1725;border:1px solid var(--line);font-size:12px;color:#a8b6c7;line-height:1.5}
 @media(max-width:900px){.admin-seat-grid{grid-template-columns:1fr}}
 
+
+/* Season Setup */
+.setup-button{background:#13243a;color:#9ed0ff;border:1px solid #315575;border-radius:8px;padding:14px 24px;font-weight:bold}.setup-button:hover{border-color:#7aa9d6}
+.setup-modal-card{width:min(1120px,100%);max-height:92vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px;text-align:left}
+.setup-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:18px}.setup-header h3{font-size:25px;margin-bottom:5px}.setup-lock{font-size:12px;padding:8px 10px;border-radius:999px;border:1px solid #2f7550;color:var(--green);background:#10271f;white-space:nowrap}.setup-lock.locked{border-color:#6b5a24;color:var(--amber);background:#211d0d}
+.setup-section{border:1px solid var(--line);background:var(--panel2);border-radius:14px;padding:18px;margin-top:16px}.setup-section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.setup-section-title h4{font-size:17px}.setup-note{font-size:12px;color:#8fa6bf;line-height:1.5}.pool-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.pool-card{border:1px solid #1f3448;background:#091522;border-radius:12px;padding:14px}.pool-card h5{font-size:14px;margin-bottom:5px}.pool-count{font-size:11px;color:#7f95aa;margin-bottom:10px}.pool-textarea{width:100%;min-height:220px;resize:vertical;padding:12px;border-radius:8px;border:1px solid var(--line);background:#07111f;color:#fff;font:13px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace}.pool-textarea:focus{outline:none;border-color:var(--green)}.pool-actions{display:flex;gap:8px;align-items:center;margin-top:9px;flex-wrap:wrap}.pool-save-status{font-size:11px;color:#8fa6bf}
+.setup-category-list{display:grid;gap:9px}.setup-category-row{display:grid;grid-template-columns:52px minmax(0,1.3fr) minmax(0,1fr) 160px 80px 110px auto;gap:9px;align-items:center;border-top:1px solid #1a2d40;padding:10px 0}.setup-category-row:first-child{border-top:none}.setup-cat-order{font-size:11px;color:#6e849b}.setup-cat-name{font-weight:bold}.setup-cat-meta{font-size:12px;color:#8fa6bf}.core-pill{display:inline-block;font-size:9px;letter-spacing:.6px;border:1px solid #66541f;color:var(--amber);border-radius:999px;padding:3px 6px;margin-left:6px;vertical-align:middle}.setup-cat-actions{display:flex;gap:6px;justify-content:flex-end}.setup-cat-actions button{padding:8px 10px;font-size:11px}.category-editor{margin-top:14px;border-top:1px solid var(--line);padding-top:16px}.setup-fields{display:grid;grid-template-columns:1.2fr 1.2fr 1fr .65fr 1fr;gap:10px}.setup-fields .field{margin-bottom:0}.setup-fields select,.setup-fields input{width:100%;padding:11px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:white}.setup-position-field{margin-top:10px}.setup-position-field input{width:100%;padding:11px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:white}.setup-message{font-size:12px;min-height:18px;margin-top:10px;color:#8fa6bf}.setup-message.bad{color:var(--red)}.setup-message.good{color:var(--green)}
+@media(max-width:980px){.pool-grid{grid-template-columns:1fr}.setup-category-row{grid-template-columns:44px 1fr auto}.setup-category-row .setup-cat-group,.setup-category-row .setup-cat-type,.setup-category-row .setup-cat-picks,.setup-category-row .setup-cat-pool{display:none}.setup-fields{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.setup-fields{grid-template-columns:1fr}.setup-header{flex-direction:column}.setup-modal-card{padding:18px}.pool-textarea{min-height:170px}}
+
 @media(max-width:760px){h1{font-size:40px}.choice-grid,.seats,.order-panel,.summary-grid{grid-template-columns:1fr}.room-header,.draft-header,.season-header{flex-direction:column}.room-meta,.draft-meta,.season-meta{text-align:left}.game-code{font-size:28px}.screen,#draftScreen,#seasonScreen{padding:18px}.on-clock{font-size:30px}.action-row{flex-direction:column;align-items:stretch}.result-slot{grid-template-columns:1fr}.season-actions{justify-content:flex-start}}
 </style>
 </head>
@@ -179,6 +189,7 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
         <button id="roomRejoinKeyButton" class="secondary-button">MY REJOIN KEY</button>
         <button id="roomRecoveryAdminButton" class="danger-button hidden">RESET SEAT KEY</button>
         <button id="roomCommissionerButton" class="admin-button hidden">COMMISSIONER CONTROLS</button>
+        <button id="roomSeasonSetupButton" class="setup-button hidden">SEASON SETUP</button>
         <button id="roomPreviousSeasonButton" class="secondary-button hidden">PREVIOUS SEASON</button>
         <button id="roomArchiveButton" class="secondary-button">MY SEASONS</button>
       </div>
@@ -398,6 +409,56 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
   </div>
 </div>
 
+
+<!-- COMMISSIONER SEASON SETUP -->
+<div id="seasonSetupModal" class="modal-backdrop hidden">
+  <div class="setup-modal-card">
+    <div class="setup-header">
+      <div>
+        <div class="green-label">COMMISSIONER SEASON SETUP</div>
+        <h3>Season Setup</h3>
+        <p class="setup-note">Edit competition club pools and prediction categories before the draft begins. Once START DRAFT is pressed, this configuration becomes read-only for the season.</p>
+      </div>
+      <div id="setupLockStatus" class="setup-lock">EDITABLE • LOBBY</div>
+    </div>
+
+    <div class="setup-section">
+      <div class="setup-section-title">
+        <div><h4>Competition club pools</h4><div class="setup-note">One club per line. These lists power the canonical dropdowns used during drafting and Results Entry.</div></div>
+      </div>
+      <div id="setupPoolGrid" class="pool-grid"></div>
+    </div>
+
+    <div class="setup-section">
+      <div class="setup-section-title">
+        <div><h4>Prediction categories</h4><div class="setup-note">Core-rule categories are protected because EPL linkage, Exclusive Locks and UCL consistency depend on them. You may still change their group or club pool.</div></div>
+        <button id="newSetupCategoryButton" class="main-button">+ ADD CATEGORY</button>
+      </div>
+      <div id="setupCategoryList" class="setup-category-list"></div>
+
+      <div id="setupCategoryEditor" class="category-editor hidden">
+        <div class="setup-fields">
+          <div class="field"><label>Category group</label><input id="setupCategoryGroup" maxlength="60" placeholder="e.g. Domestic Cups"></div>
+          <div class="field"><label>Category name</label><input id="setupCategoryName" maxlength="80" placeholder="e.g. FA Cup Winner"></div>
+          <div class="field"><label>Type</label><select id="setupCategoryType"><option value="unique">Single Unique</option><option value="ranked_positional">Ranked Positional</option><option value="multi_unique">Multi-pick Unique</option></select></div>
+          <div class="field"><label>Picks / GM</label><input id="setupPicksPerGM" type="number" min="1" max="10" value="1"></div>
+          <div class="field"><label>Club pool</label><select id="setupPoolCode"><option value="">Free text</option><option value="EPL">Premier League</option><option value="UCL">Champions League</option><option value="UEL">Europa League</option><option value="UECL">Conference League</option><option value="SERIE_A">Serie A</option></select></div>
+        </div>
+        <div id="setupPositionWrap" class="setup-position-field hidden">
+          <div class="field"><label>Position labels — comma separated</label><input id="setupPositionLabels" placeholder="e.g. 1st, 2nd, 3rd"></div>
+        </div>
+        <div class="form-actions">
+          <button id="saveSetupCategoryButton" class="main-button">SAVE CATEGORY</button>
+          <button id="cancelSetupCategoryButton" class="secondary-button">CANCEL</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="setupMessage" class="setup-message"></div>
+    <div class="modal-actions"><button id="closeSeasonSetupButton" class="secondary-button">CLOSE</button></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://glydtiuzgzzwzziddkxl.supabase.co";
@@ -461,6 +522,18 @@ const CLUB_OPTIONS_BY_CATEGORY = {
   "Serie A Champions": SERIE_A_CLUBS
 };
 
+const SEASON_POOL_META = {
+  EPL:{label:"Premier League",expected:20},
+  UCL:{label:"Champions League",expected:36},
+  UEL:{label:"Europa League",expected:36},
+  UECL:{label:"Conference League",expected:36},
+  SERIE_A:{label:"Serie A",expected:20}
+};
+const CORE_RULE_CATEGORIES = new Set([
+  "EPL Champions","EPL Top 5 Teams","Relegated Teams",
+  "Best 3 New Signings","UCL Champions","UCL Runners-up"
+]);
+
 let currentAuthUser=null;
 let currentGame=null;
 let currentPlayer=null;
@@ -469,6 +542,8 @@ let categories=[];
 let picks=[];
 let seasonResults=[];
 let leaderboard=[];
+let seasonClubs=[];
+let editingSetupCategoryId=null;
 let currentSeasonTab="leaderboard";
 let liveChannel=null;
 let onlinePlayerIds=new Set();
@@ -684,6 +759,9 @@ async function createGame(){
     const gameId=Array.isArray(rpc.data)?rpc.data[0]:rpc.data;
     if(!gameId) throw new Error("Supabase did not return a game ID.");
 
+    const setupSeed=await db.rpc("commissioner_initialize_standard_pools",{p_game_id:gameId});
+    if(setupSeed.error) throw setupSeed.error;
+
     const playerInsert=await db.from("players").insert({game_id:gameId,user_id:currentAuthUser.id,display_name:name,seat_number:1,is_ready:false}).select().single();
     if(playerInsert.error) throw playerInsert.error;
     currentPlayer=playerInsert.data;
@@ -756,17 +834,18 @@ async function restoreRoomIfPossible(){
 
 async function loadFullState(gameId=currentGame?.id){
   if(!gameId) return;
-  const [gameRes,playersRes,catsRes,picksRes,resultsRes,leaderRes]=await Promise.all([
+  const [gameRes,playersRes,catsRes,picksRes,resultsRes,leaderRes,clubsRes]=await Promise.all([
     db.from("games").select("*").eq("id",gameId).single(),
     db.from("players").select("*").eq("game_id",gameId).order("seat_number"),
     db.from("categories").select("*").eq("game_id",gameId).order("category_order"),
     db.from("picks").select("*").eq("game_id",gameId).order("draft_sequence"),
     db.from("category_results").select("*").eq("game_id",gameId).order("category_id").order("result_slot"),
-    db.from("draft_leaderboard").select("*").eq("game_id",gameId).order("total_points",{ascending:false}).order("seat_number")
+    db.from("draft_leaderboard").select("*").eq("game_id",gameId).order("total_points",{ascending:false}).order("seat_number"),
+    db.from("season_clubs").select("*").eq("game_id",gameId).order("pool_code").order("sort_order")
   ]);
-  const err=gameRes.error||playersRes.error||catsRes.error||picksRes.error||resultsRes.error||leaderRes.error;
+  const err=gameRes.error||playersRes.error||catsRes.error||picksRes.error||resultsRes.error||leaderRes.error||clubsRes.error;
   if(err){console.error(err);if($("draftMessage")) showDraftMessage(err.message,true);if($("seasonMessage")) showSeasonMessage(err.message,true);return;}
-  currentGame=gameRes.data;roomPlayers=playersRes.data||[];categories=catsRes.data||[];picks=picksRes.data||[];seasonResults=resultsRes.data||[];leaderboard=leaderRes.data||[];
+  currentGame=gameRes.data;roomPlayers=playersRes.data||[];categories=catsRes.data||[];picks=picksRes.data||[];seasonResults=resultsRes.data||[];leaderboard=leaderRes.data||[];seasonClubs=clubsRes.data||[];
   const fresh=roomPlayers.find(p=>p.user_id===currentAuthUser.id);
   if(fresh) currentPlayer=fresh;
   else if(currentPlayer){
@@ -777,6 +856,7 @@ async function loadFullState(gameId=currentGame?.id){
     return;
   }
   routeView();
+  if(!$("seasonSetupModal").classList.contains("hidden")) renderSeasonSetup();
 }
 
 function routeView(){
@@ -811,6 +891,7 @@ function renderRoomControls(){
   $("startDraftButton").classList.toggle("hidden",!isCommissioner);$("startDraftButton").disabled=!allReady||currentGame.status!=="lobby";
   $("roomRecoveryAdminButton").classList.toggle("hidden",!isCommissioner);
   $("roomCommissionerButton").classList.toggle("hidden",!isCommissioner);
+  $("roomSeasonSetupButton").classList.toggle("hidden",!(isCommissioner&&currentGame.status==="lobby"));
   $("roomPreviousSeasonButton").classList.toggle("hidden",!currentGame.previous_game_id);
   const banner=$("gameStatusBanner");banner.classList.remove("live");
   if(!allSeatsFilled) banner.textContent="Waiting for "+(3-roomPlayers.length)+" more manager"+((3-roomPlayers.length)===1?"":"s")+".";
@@ -824,7 +905,11 @@ $("readyButton").addEventListener("click",async()=>{
   if(res.error) $("roomMessage").textContent=res.error.message;else {$("roomMessage").textContent="";await loadFullState();}
 });
 $("startDraftButton").addEventListener("click",async()=>{
-  if(!currentGame) return;$("roomMessage").textContent="Starting draft…";
+  if(!currentGame) return;
+  const missingPools=categories.filter(c=>c.pool_code && !(poolOptions(c.pool_code)||[]).length);
+  if(missingPools.length){$("roomMessage").textContent="Season Setup is incomplete: "+missingPools.map(c=>c.category_name).join(", ")+" has no club pool.";return;}
+  if(!confirm("Start the draft? Season Setup will lock for this season once the draft begins.")) return;
+  $("roomMessage").textContent="Starting draft…";
   const res=await db.from("games").update({status:"drafting"}).eq("id",currentGame.id);
   if(res.error) $("roomMessage").textContent=res.error.message;else await loadFullState();
 });
@@ -864,8 +949,16 @@ function renderDraft(){
 function normaliseFreeText(value){
   return value.trim().replace(/\s+/g," ");
 }
+function poolOptions(poolCode){
+  if(!poolCode) return null;
+  const rows=seasonClubs.filter(r=>r.pool_code===poolCode).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));
+  return rows.length ? rows.map(r=>r.club_name) : null;
+}
 function canonicalOptionsForCategory(cat){
-  return cat ? (CLUB_OPTIONS_BY_CATEGORY[cat.category_name] || null) : null;
+  if(!cat) return null;
+  const live=poolOptions(cat.pool_code);
+  if(live) return live;
+  return CLUB_OPTIONS_BY_CATEGORY[cat.category_name] || null;
 }
 function eligibleCanonicalOptions(cat,state){
   let options=[...(canonicalOptionsForCategory(cat)||[])];
@@ -935,7 +1028,7 @@ function configureNomineeControl(state){
     select.innerHTML='<option value="">Select club…</option>'+options.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join("");
     if(options.includes(previous)) select.value=previous;
     input.classList.add("hidden");select.classList.remove("hidden");
-    help.textContent="Choose from the official 2026/27 competition list. This prevents spelling variants from bypassing duplicate rules.";
+    help.textContent="Choose from this season’s Commissioner-managed competition pool. This prevents spelling variants from bypassing duplicate rules.";
   }else{
     select.classList.add("hidden");input.classList.remove("hidden");
     input.placeholder=cat?.category_type==="ranked_positional"?"Enter club":"Enter nominee";
@@ -1184,7 +1277,7 @@ function renderFinalBoard(){
   });
 }
 function resultOptionsFor(cat,slot){
-  let options=[...(CLUB_OPTIONS_BY_CATEGORY[cat.category_name]||[])];
+  let options=[...(canonicalOptionsForCategory(cat)||[])];
   if(!options.length) return options;
   const current=resultFor(cat.id,slot)?.result_value||"";
   const usedSame=new Set(seasonResults.filter(r=>r.category_id===cat.id&&Number(r.result_slot)!==Number(slot)).map(r=>r.result_value));
@@ -1211,7 +1304,7 @@ function renderResultsEditor(){
     const card=document.createElement("div");card.className="result-card";card.innerHTML=`<div class="result-card-title">${esc(cat.category_name)}</div>`;
     const slots=cat.category_type==="unique"?1:Number(cat.picks_per_gm);const labels=Array.isArray(cat.position_labels)?cat.position_labels:[];
     for(let slot=1;slot<=slots;slot++){
-      const existing=resultFor(cat.id,slot);const canonical=CLUB_OPTIONS_BY_CATEGORY[cat.category_name]||null;const row=document.createElement("div");row.className="result-slot";
+      const existing=resultFor(cat.id,slot);const canonical=canonicalOptionsForCategory(cat);const row=document.createElement("div");row.className="result-slot";
       const label=cat.category_type==="ranked_positional"?(labels[slot-1]||("Position "+slot)):cat.category_type==="multi_unique"?("Result "+slot):"Actual result";
       let control="";
       if(canonical){
@@ -1318,12 +1411,100 @@ async function openSeasonArchive(){
 }
 function closeSeasonArchive(){$("seasonArchiveModal").classList.add("hidden");}
 
+/* =========================================================
+   COMMISSIONER SEASON SETUP
+   ========================================================= */
+function setupMsg(text,bad=false,good=false){
+  const el=$("setupMessage");el.textContent=text||"";el.className="setup-message"+(bad?" bad":good?" good":"");
+}
+function isSetupEditable(){return !!(currentGame&&currentGame.status==="lobby"&&currentGame.commissioner_user_id===currentAuthUser?.id);}
+function poolRows(code){return seasonClubs.filter(r=>r.pool_code===code).sort((a,b)=>(a.sort_order||0)-(b.sort_order||0));}
+function openSeasonSetup(){
+  if(!currentGame||currentGame.commissioner_user_id!==currentAuthUser?.id) return;
+  $("seasonSetupModal").classList.remove("hidden");editingSetupCategoryId=null;renderSeasonSetup();
+}
+function closeSeasonSetup(){$("seasonSetupModal").classList.add("hidden");$("setupCategoryEditor").classList.add("hidden");editingSetupCategoryId=null;}
+function renderSeasonSetup(){
+  const editable=isSetupEditable();
+  const lock=$("setupLockStatus");lock.textContent=editable?"EDITABLE • LOBBY":"LOCKED • DRAFT STARTED";lock.classList.toggle("locked",!editable);
+  $("newSetupCategoryButton").disabled=!editable;
+  const grid=$("setupPoolGrid");grid.innerHTML="";
+  Object.entries(SEASON_POOL_META).forEach(([code,meta])=>{
+    const rows=poolRows(code);const card=document.createElement("div");card.className="pool-card";
+    card.innerHTML=`<h5>${esc(meta.label)}</h5><div class="pool-count">${rows.length} clubs • typical field ${meta.expected}</div><textarea class="pool-textarea" data-pool="${code}" ${editable?"":"disabled"}>${esc(rows.map(r=>r.club_name).join("\n"))}</textarea><div class="pool-actions"><button class="secondary-button" data-save-pool="${code}" ${editable?"":"disabled"}>SAVE ${esc(meta.label.toUpperCase())}</button><span class="pool-save-status" id="poolStatus_${code}"></span></div>`;
+    grid.appendChild(card);
+  });
+  grid.querySelectorAll("[data-save-pool]").forEach(btn=>btn.addEventListener("click",()=>saveSetupPool(btn.dataset.savePool)));
+
+  const list=$("setupCategoryList");list.innerHTML="";
+  categories.forEach(cat=>{
+    const core=CORE_RULE_CATEGORIES.has(cat.category_name);const row=document.createElement("div");row.className="setup-category-row";
+    const typeLabel=cat.category_type==="unique"?"Single Unique":cat.category_type==="ranked_positional"?"Ranked":"Multi Unique";
+    row.innerHTML=`<div class="setup-cat-order">#${Number(cat.category_order)}</div><div><div class="setup-cat-name">${esc(cat.category_name)}${core?'<span class="core-pill">CORE RULE</span>':''}</div><div class="setup-cat-meta setup-cat-group">${esc(cat.category_group)}</div></div><div class="setup-cat-meta setup-cat-group">${esc(cat.category_group)}</div><div class="setup-cat-meta setup-cat-type">${esc(typeLabel)}</div><div class="setup-cat-meta setup-cat-picks">×${Number(cat.picks_per_gm)}</div><div class="setup-cat-meta setup-cat-pool">${esc(cat.pool_code||"Free text")}</div><div class="setup-cat-actions"></div>`;
+    const acts=row.querySelector(".setup-cat-actions");
+    const edit=document.createElement("button");edit.className="secondary-button";edit.textContent="EDIT";edit.disabled=!editable;edit.addEventListener("click",()=>editSetupCategory(cat.id));acts.appendChild(edit);
+    const del=document.createElement("button");del.className="danger-button";del.textContent="DELETE";del.disabled=!editable||core;del.title=core?"Protected core-rule category":"Delete category";del.addEventListener("click",()=>deleteSetupCategory(cat.id));acts.appendChild(del);
+    list.appendChild(row);
+  });
+}
+async function saveSetupPool(code){
+  if(!isSetupEditable()) return setupMsg("Season Setup is locked after the draft starts.",true);
+  const ta=document.querySelector(`.pool-textarea[data-pool="${code}"]`);const status=$("poolStatus_"+code);
+  const clubs=(ta?.value||"").split(/\n|,/).map(x=>x.trim().replace(/\s+/g," ")).filter(Boolean);
+  const unique=[...new Map(clubs.map(x=>[x.toLowerCase(),x])).values()];
+  status.textContent="Saving…";
+  const res=await db.rpc("commissioner_replace_club_pool",{p_game_id:currentGame.id,p_pool_code:code,p_clubs:unique});
+  if(res.error){status.textContent=res.error.message;status.style.color="#ff7878";return;}
+  status.textContent=`Saved ${unique.length} clubs`;status.style.color="#5ee28a";await loadFullState();renderSeasonSetup();
+}
+function clearSetupCategoryEditor(){
+  editingSetupCategoryId=null;$("setupCategoryGroup").value="";$("setupCategoryName").value="";$("setupCategoryType").value="unique";$("setupPicksPerGM").value=1;$("setupPoolCode").value="";$("setupPositionLabels").value="";
+  $("setupCategoryName").disabled=false;$("setupCategoryType").disabled=false;$("setupPicksPerGM").disabled=false;updateSetupPositionVisibility();
+}
+function openNewSetupCategory(){if(!isSetupEditable())return;clearSetupCategoryEditor();$("setupCategoryEditor").classList.remove("hidden");$("setupCategoryGroup").focus();}
+function editSetupCategory(id){
+  const cat=categories.find(c=>c.id===id);if(!cat)return;editingSetupCategoryId=id;$("setupCategoryEditor").classList.remove("hidden");
+  $("setupCategoryGroup").value=cat.category_group||"";$("setupCategoryName").value=cat.category_name||"";$("setupCategoryType").value=cat.category_type;$("setupPicksPerGM").value=cat.picks_per_gm;$("setupPoolCode").value=cat.pool_code||"";
+  const labels=Array.isArray(cat.position_labels)?cat.position_labels:[];$("setupPositionLabels").value=labels.join(", ");
+  const core=CORE_RULE_CATEGORIES.has(cat.category_name);$("setupCategoryName").disabled=core;$("setupCategoryType").disabled=core;$("setupPicksPerGM").disabled=core;updateSetupPositionVisibility();
+}
+function updateSetupPositionVisibility(){
+  const ranked=$("setupCategoryType").value==="ranked_positional";$("setupPositionWrap").classList.toggle("hidden",!ranked);
+}
+async function saveSetupCategory(){
+  if(!isSetupEditable()) return setupMsg("Season Setup is locked.",true);
+  const group=$("setupCategoryGroup").value.trim(),name=$("setupCategoryName").value.trim(),type=$("setupCategoryType").value,picksPer=Number($("setupPicksPerGM").value),pool=$("setupPoolCode").value||null;
+  const labels=$("setupPositionLabels").value.split(",").map(x=>x.trim()).filter(Boolean);
+  if(!group||!name)return setupMsg("Enter both a category group and category name.",true);
+  if(type==="ranked_positional"&&labels.length!==picksPer)return setupMsg(`Ranked categories need exactly ${picksPer} position labels.`,true);
+  setupMsg("Saving category…");
+  const params={p_category_group:group,p_category_name:name,p_category_type:type,p_picks_per_gm:picksPer,p_pool_code:pool,p_position_labels:type==="ranked_positional"?labels:null};
+  const res=editingSetupCategoryId
+    ? await db.rpc("commissioner_update_category",{p_category_id:editingSetupCategoryId,...params})
+    : await db.rpc("commissioner_add_category",{p_game_id:currentGame.id,...params});
+  if(res.error)return setupMsg(res.error.message,true);
+  setupMsg("Category saved.",false,true);$("setupCategoryEditor").classList.add("hidden");clearSetupCategoryEditor();await loadFullState();renderSeasonSetup();
+}
+async function deleteSetupCategory(id){
+  const cat=categories.find(c=>c.id===id);if(!cat||!isSetupEditable())return;
+  if(!confirm(`Delete “${cat.category_name}” from this season?`))return;
+  const res=await db.rpc("commissioner_delete_category",{p_category_id:id});if(res.error)return setupMsg(res.error.message,true);
+  setupMsg("Category deleted.",false,true);await loadFullState();renderSeasonSetup();
+}
+
 function setSeasonTab(tab){
   const isCommissioner=currentGame?.commissioner_user_id===currentAuthUser?.id;const isArchived=currentGame?.status==="archived";if(tab==="results"&&(!isCommissioner||isArchived)) tab="leaderboard";currentSeasonTab=tab;
   const map={leaderboard:"leaderboardPanel",board:"finalBoardPanel",results:"resultsPanel"};
   Object.entries(map).forEach(([key,id])=>$(id).classList.toggle("hidden",key!==tab));
   $("leaderboardTab").classList.toggle("active",tab==="leaderboard");$("finalBoardTab").classList.toggle("active",tab==="board");$("resultsTab").classList.toggle("active",tab==="results");
 }
+$("roomSeasonSetupButton").addEventListener("click",openSeasonSetup);
+$("closeSeasonSetupButton").addEventListener("click",closeSeasonSetup);
+$("seasonSetupModal").addEventListener("click",e=>{if(e.target===$("seasonSetupModal"))closeSeasonSetup();});
+$("newSetupCategoryButton").addEventListener("click",openNewSetupCategory);
+$("saveSetupCategoryButton").addEventListener("click",saveSetupCategory);
+$("cancelSetupCategoryButton").addEventListener("click",()=>{$("setupCategoryEditor").classList.add("hidden");clearSetupCategoryEditor();});
+$("setupCategoryType").addEventListener("change",updateSetupPositionVisibility);
 $("leaderboardTab").addEventListener("click",()=>setSeasonTab("leaderboard"));
 $("finalBoardTab").addEventListener("click",()=>setSeasonTab("board"));
 $("resultsTab").addEventListener("click",()=>setSeasonTab("results"));
@@ -1369,6 +1550,7 @@ function subscribeToGame(){
     .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:"game_id=eq."+currentGame.id},scheduleRefresh)
     .on("postgres_changes",{event:"*",schema:"public",table:"games",filter:"id=eq."+currentGame.id},scheduleRefresh)
     .on("postgres_changes",{event:"*",schema:"public",table:"categories",filter:"game_id=eq."+currentGame.id},scheduleRefresh)
+    .on("postgres_changes",{event:"*",schema:"public",table:"season_clubs",filter:"game_id=eq."+currentGame.id},scheduleRefresh)
     .on("postgres_changes",{event:"*",schema:"public",table:"picks",filter:"game_id=eq."+currentGame.id},scheduleRefresh)
     .on("postgres_changes",{event:"*",schema:"public",table:"category_results",filter:"game_id=eq."+currentGame.id},scheduleRefresh)
     .on("presence",{event:"sync"},syncPresence)

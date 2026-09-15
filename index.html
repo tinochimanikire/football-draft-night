@@ -62,6 +62,9 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
 .admin-button{background:#10271f;color:var(--green);border:1px solid #2f7a55;border-radius:8px;padding:14px 20px;font-weight:bold}.admin-button:hover{border-color:var(--green)}
 .pause-banner{border:1px solid var(--amber);background:#2a2411;color:var(--amber);padding:14px 18px;border-radius:10px;text-align:center;margin-bottom:18px;font-weight:bold}
 .admin-modal{width:min(920px,100%);max-height:88vh;overflow:auto}.admin-topbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:18px 0}.admin-state{padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:#a8b6c7}.admin-seat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.admin-seat{border:1px solid var(--line);border-radius:12px;background:var(--panel2);padding:16px}.admin-seat h4{font-size:17px;margin:6px 0}.presence-online{color:var(--green);font-size:12px}.presence-offline{color:var(--faint);font-size:12px}.admin-seat-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}.admin-seat-actions button{padding:8px 10px;font-size:11px}.admin-note{font-size:12px;color:#8195aa;line-height:1.5;margin-top:14px}.admin-message{min-height:18px;margin-top:12px;font-size:13px;color:#9baabd}.admin-message.bad{color:var(--red)}.admin-message.good{color:var(--green)}
+
+.archive-banner{margin-bottom:18px;padding:16px 18px;border:1px solid #6b5a24;background:#211d0d;border-radius:12px;color:#f4d77a;font-size:13px;line-height:1.5}.archive-banner strong{color:#ffe89b}
+.archive-list{display:grid;gap:12px;margin-top:18px;max-height:55vh;overflow:auto}.archive-item{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:left;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center}.archive-item-title{font-weight:bold;font-size:16px}.archive-item-meta{font-size:12px;color:#8fa6bf;line-height:1.55;margin-top:5px}.status-pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:10px;font-weight:bold;letter-spacing:.8px;margin-left:7px;color:#b8c6d3}.status-pill.archived{border-color:#6b5a24;color:#f4d77a;background:#211d0d}.status-pill.live{border-color:#2f7550;color:var(--green);background:#10271f}.next-season-note{margin-top:10px;padding:12px;border-radius:10px;background:#0c1725;border:1px solid var(--line);font-size:12px;color:#a8b6c7;line-height:1.5}
 @media(max-width:900px){.admin-seat-grid{grid-template-columns:1fr}}
 
 @media(max-width:760px){h1{font-size:40px}.choice-grid,.seats,.order-panel,.summary-grid{grid-template-columns:1fr}.room-header,.draft-header,.season-header{flex-direction:column}.room-meta,.draft-meta,.season-meta{text-align:left}.game-code{font-size:28px}.screen,#draftScreen,#seasonScreen{padding:18px}.on-clock{font-size:30px}.action-row{flex-direction:column;align-items:stretch}.result-slot{grid-template-columns:1fr}.season-actions{justify-content:flex-start}}
@@ -98,6 +101,10 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
           <p>Lost your browser session or changed device? Reclaim your existing seat with your saved Rejoin Key.</p>
           <button id="showRecoverButton" class="secondary-button">RECOVER SEAT</button>
         </div>
+      </div>
+
+      <div class="form-actions" style="justify-content:center;margin-top:18px">
+        <button id="homeArchiveButton" class="secondary-button">MY SEASONS</button>
       </div>
 
       <div id="createPanel" class="form-panel hidden">
@@ -172,6 +179,8 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
         <button id="roomRejoinKeyButton" class="secondary-button">MY REJOIN KEY</button>
         <button id="roomRecoveryAdminButton" class="danger-button hidden">RESET SEAT KEY</button>
         <button id="roomCommissionerButton" class="admin-button hidden">COMMISSIONER CONTROLS</button>
+        <button id="roomPreviousSeasonButton" class="secondary-button hidden">PREVIOUS SEASON</button>
+        <button id="roomArchiveButton" class="secondary-button">MY SEASONS</button>
       </div>
       <div id="roomMessage" class="room-message"></div>
       <div class="start-note">Each GM should use a separate browser profile/device. Ordinary tabs share the same anonymous Supabase identity.</div>
@@ -237,6 +246,8 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
           <button id="draftRejoinKeyButton" class="secondary-button">MY REJOIN KEY</button>
           <button id="draftRecoveryAdminButton" class="danger-button hidden">RESET SEAT KEY</button>
           <button id="draftCommissionerButton" class="admin-button hidden">COMMISSIONER CONTROLS</button>
+          <button id="draftPreviousSeasonButton" class="secondary-button hidden">PREVIOUS SEASON</button>
+          <button id="draftArchiveButton" class="secondary-button">MY SEASONS</button>
         </div>
         <div class="panel-title">LIVE DRAFT BOARD</div>
         <div class="board-wrap">
@@ -271,8 +282,15 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
       </div>
     </div>
 
+    <div id="seasonArchiveBanner" class="archive-banner hidden"><strong>ARCHIVED SEASON</strong> — this historical draft, its results and its leaderboard are read-only.</div>
+
     <div class="season-actions">
       <button id="reopenDraftButton" class="danger-button hidden">REOPEN DRAFT</button>
+      <button id="archiveSeasonButton" class="danger-button hidden">ARCHIVE SEASON</button>
+      <button id="createNextSeasonButton" class="main-button hidden">CREATE NEXT SEASON</button>
+      <button id="openNextSeasonButton" class="main-button hidden">OPEN NEXT SEASON</button>
+      <button id="openPreviousSeasonButton" class="secondary-button hidden">PREVIOUS SEASON</button>
+      <button id="seasonArchiveButton" class="secondary-button">MY SEASONS</button>
       <button id="refreshSeasonButton" class="secondary-button">REFRESH HUB</button>
       <button id="copySeasonCodeButton" class="secondary-button">COPY CODE</button>
       <button id="seasonRejoinKeyButton" class="secondary-button">MY REJOIN KEY</button>
@@ -330,6 +348,33 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
     <div class="modal-actions">
       <button id="copyRejoinKeyButton" class="main-button">COPY KEY</button>
       <button id="closeRejoinKeyButton" class="secondary-button">I'VE SAVED IT</button>
+    </div>
+  </div>
+</div>
+
+<div id="seasonArchiveModal" class="modal-backdrop hidden">
+  <div class="modal-card admin-modal">
+    <div class="green-label">SEASON ARCHIVE</div>
+    <h3>My Football Draft Seasons</h3>
+    <p class="recovery-note">Open any season linked to your current Supabase identity. Archived seasons remain read-only historical records.</p>
+    <div id="seasonArchiveList" class="archive-list"></div>
+    <div id="seasonArchiveMessage" class="admin-message"></div>
+    <div class="modal-actions"><button id="closeSeasonArchiveButton" class="secondary-button">CLOSE</button></div>
+  </div>
+</div>
+
+<div id="nextSeasonModal" class="modal-backdrop hidden">
+  <div class="modal-card">
+    <div class="green-label">CREATE NEXT SEASON</div>
+    <h3>Start a fresh annual draft</h3>
+    <p class="recovery-note">The same three seats, GM names and category rules will carry forward. Picks, results, scores and Ready states start from zero.</p>
+    <div class="field"><label>New draft name</label><input id="nextSeasonName" maxlength="80"></div>
+    <div class="field"><label>New game code</label><input id="nextSeasonCode" maxlength="10"></div>
+    <div class="next-season-note">Your current season must already be archived. Once created, all three existing GM identities are assigned to the same seats in the new lobby.</div>
+    <div id="nextSeasonError" class="error"></div>
+    <div class="modal-actions">
+      <button id="confirmNextSeasonButton" class="main-button">CREATE NEXT SEASON</button>
+      <button id="cancelNextSeasonButton" class="secondary-button">CANCEL</button>
     </div>
   </div>
 </div>
@@ -738,7 +783,7 @@ function routeView(){
   if(!currentGame||!currentPlayer){showScreen("home");return;}
   if(currentGame.status==="lobby"){
     showScreen("room");renderRoom();
-  }else if(currentGame.status==="draft_complete" || currentGame.status==="season_complete"){
+  }else if(currentGame.status==="draft_complete" || currentGame.status==="season_complete" || currentGame.status==="archived"){
     showScreen("season");renderSeasonHub();
   }else{
     showScreen("draft");renderDraft();
@@ -766,6 +811,7 @@ function renderRoomControls(){
   $("startDraftButton").classList.toggle("hidden",!isCommissioner);$("startDraftButton").disabled=!allReady||currentGame.status!=="lobby";
   $("roomRecoveryAdminButton").classList.toggle("hidden",!isCommissioner);
   $("roomCommissionerButton").classList.toggle("hidden",!isCommissioner);
+  $("roomPreviousSeasonButton").classList.toggle("hidden",!currentGame.previous_game_id);
   const banner=$("gameStatusBanner");banner.classList.remove("live");
   if(!allSeatsFilled) banner.textContent="Waiting for "+(3-roomPlayers.length)+" more manager"+((3-roomPlayers.length)===1?"":"s")+".";
   else if(!allReady) banner.textContent="All managers have joined. Waiting for everyone to mark READY.";
@@ -799,6 +845,7 @@ function renderDraft(){
   const state=currentTurnState();
   $("undoPickButton").classList.toggle("hidden",!isCommissioner || currentGame.status!=="drafting");
   $("draftCommissionerButton").classList.toggle("hidden",!isCommissioner);
+  $("draftPreviousSeasonButton").classList.toggle("hidden",!currentGame.previous_game_id);
   $("draftPausedBanner").classList.toggle("hidden",currentGame.status!=="paused");
   $("finalizeDraftButton").classList.toggle("hidden",!(isCommissioner && currentGame.status==="drafting" && state?.complete));
   $("draftCompleteBanner").classList.toggle("hidden",!state?.complete);
@@ -1063,16 +1110,22 @@ function showSeasonMessage(text,bad=false,good=false){
   const el=$("seasonMessage");if(!el) return;el.textContent=text||"";el.className="season-message"+(bad?" bad":good?" good":"");
 }
 function renderSeasonHub(){
-  $("seasonGameName").textContent=currentGame.game_name+" — Season Hub";
+  const isCommissioner=currentGame.commissioner_user_id===currentAuthUser?.id;
+  const isArchived=currentGame.status==="archived";
+  $("seasonGameName").textContent=currentGame.game_name+(isArchived?" — Archive":" — Season Hub");
   $("seasonGameCode").textContent=currentGame.game_code;
   $("seasonUserName").textContent=currentPlayer.display_name;
   $("seasonSeat").textContent=currentPlayer.seat_number;
-  const isCommissioner=currentGame.commissioner_user_id===currentAuthUser?.id;
-  $("resultsTab").classList.toggle("hidden",!isCommissioner);
-  $("reopenDraftButton").classList.toggle("hidden",!isCommissioner);
+  $("seasonArchiveBanner").classList.toggle("hidden",!isArchived);
+  $("resultsTab").classList.toggle("hidden",!isCommissioner||isArchived);
+  $("reopenDraftButton").classList.toggle("hidden",!isCommissioner||isArchived||currentGame.status!=="draft_complete");
+  $("archiveSeasonButton").classList.toggle("hidden",!isCommissioner||isArchived);
+  $("createNextSeasonButton").classList.toggle("hidden",!isCommissioner||!isArchived||!!currentGame.next_game_id);
+  $("openNextSeasonButton").classList.toggle("hidden",!currentGame.next_game_id);
+  $("openPreviousSeasonButton").classList.toggle("hidden",!currentGame.previous_game_id);
   $("seasonRecoveryAdminButton").classList.toggle("hidden",!isCommissioner);
-  $("seasonCommissionerButton").classList.toggle("hidden",!isCommissioner);
-  if(!isCommissioner && currentSeasonTab==="results") currentSeasonTab="leaderboard";
+  $("seasonCommissionerButton").classList.toggle("hidden",!isCommissioner||isArchived);
+  if((!isCommissioner||isArchived) && currentSeasonTab==="results") currentSeasonTab="leaderboard";
   renderSeasonSummary();renderLeaderboard();renderFinalBoard();renderResultsEditor();setSeasonTab(currentSeasonTab);
 }
 function renderSeasonSummary(){
@@ -1185,8 +1238,88 @@ async function clearSeasonResult(cat,slot){
   const res=await db.rpc("commissioner_clear_result",{p_game_id:currentGame.id,p_category_id:cat.id,p_result_slot:slot});
   if(res.error){showSeasonMessage(res.error.message,true);return;}showSeasonMessage("Result cleared.",false,true);await loadFullState();
 }
+function suggestedNextSeasonName(name){
+  const text=String(name||"");
+  const m=text.match(/(20\d{2})\/(\d{2}|20\d{2})/);
+  if(!m) return "Next Season Football Draft";
+  const start=Number(m[1])+1;
+  const endRaw=m[2];
+  const end=endRaw.length===2?String((Number(endRaw)+1)%100).padStart(2,"0"):String(Number(endRaw)+1);
+  return text.replace(m[0],`${start}/${end}`);
+}
+async function openGameById(gameId){
+  if(!gameId) return;
+  try{
+    localStorage.setItem("footballDraftGameId",gameId);
+    await loadFullState(gameId);
+    if(!currentGame||currentGame.id!==gameId||!currentPlayer) return;
+    await provisionRecoveryKey(gameId);
+    subscribeToGame();
+  }catch(err){console.error(err);alert(err.message||"Could not open that season.");}
+}
+async function openPreviousSeason(){if(currentGame?.previous_game_id) await openGameById(currentGame.previous_game_id);}
+async function openNextSeason(){if(currentGame?.next_game_id) await openGameById(currentGame.next_game_id);}
+async function archiveCurrentSeason(){
+  if(!currentGame||currentGame.commissioner_user_id!==currentAuthUser?.id||currentGame.status==="archived") return;
+  const remaining=Math.max(0,expectedResultSlots()-seasonResults.length);
+  const warning=remaining>0
+    ?`There are still ${remaining} unresolved result slot${remaining===1?"":"s"}. Archiving now will permanently freeze the current results and scores.\n\nArchive anyway?`
+    :"Archive this completed season? The draft, results and leaderboard will become read-only. This cannot be undone from the app.";
+  if(!confirm(warning)) return;
+  const btn=$("archiveSeasonButton");btn.disabled=true;btn.textContent="ARCHIVING…";
+  const res=await db.rpc("commissioner_archive_season",{p_game_id:currentGame.id});
+  btn.disabled=false;btn.textContent="ARCHIVE SEASON";
+  if(res.error){showSeasonMessage(res.error.message,true);return;}
+  showSeasonMessage("Season archived. Historical picks, results and scoring are now read-only.",false,true);
+  await loadFullState();
+}
+function openNextSeasonModal(){
+  if(!currentGame||currentGame.status!=="archived"||currentGame.next_game_id) return;
+  $("nextSeasonName").value=suggestedNextSeasonName(currentGame.game_name);
+  $("nextSeasonCode").value=generateGameCode();
+  $("nextSeasonError").textContent="";
+  $("nextSeasonModal").classList.remove("hidden");
+}
+function closeNextSeasonModal(){$("nextSeasonModal").classList.add("hidden");}
+async function createNextSeason(){
+  const name=$("nextSeasonName").value.trim();const code=cleanCode($("nextSeasonCode").value);const box=$("nextSeasonError");box.textContent="";
+  if(!name) return box.textContent="Enter a draft name.";
+  if(code.length<4) return box.textContent="Use a game code of at least 4 characters.";
+  const btn=$("confirmNextSeasonButton");btn.disabled=true;btn.textContent="CREATING…";
+  try{
+    const res=await db.rpc("commissioner_create_next_season",{p_source_game_id:currentGame.id,p_game_name:name,p_game_code:code});
+    if(res.error) throw res.error;
+    const data=res.data||{};const newId=data.game_id;if(!newId) throw new Error("Supabase did not return the new season ID.");
+    closeNextSeasonModal();
+    localStorage.setItem("footballDraftGameId",newId);
+    await loadFullState(newId);
+    await provisionRecoveryKey(newId);
+    subscribeToGame();
+  }catch(err){console.error(err);box.textContent=err.message||"Could not create the next season.";}
+  finally{btn.disabled=false;btn.textContent="CREATE NEXT SEASON";}
+}
+function archiveStatusLabel(status){return String(status||"").replaceAll("_"," ").toUpperCase();}
+async function openSeasonArchive(){
+  $("seasonArchiveModal").classList.remove("hidden");
+  const list=$("seasonArchiveList");const msg=$("seasonArchiveMessage");list.innerHTML="";msg.textContent="Loading seasons…";msg.className="admin-message";
+  const res=await db.rpc("my_seasons");
+  if(res.error){msg.textContent=res.error.message;msg.className="admin-message bad";return;}
+  const rows=res.data||[];msg.textContent="";
+  if(!rows.length){list.innerHTML='<div class="archive-item"><div><div class="archive-item-title">No seasons yet</div><div class="archive-item-meta">Create a War Room to start your first season.</div></div></div>';return;}
+  rows.forEach(row=>{
+    const item=document.createElement("div");item.className="archive-item";
+    const archived=row.game_status==="archived";
+    const when=row.archived_at?new Date(row.archived_at).toLocaleDateString():new Date(row.created_at).toLocaleDateString();
+    item.innerHTML=`<div><div class="archive-item-title">${esc(row.game_name)} <span class="status-pill ${archived?"archived":"live"}">${esc(archiveStatusLabel(row.game_status))}</span></div><div class="archive-item-meta">Code ${esc(row.game_code)} • Seat ${Number(row.seat_number)} • ${esc(row.display_name)} • ${archived?"Archived":"Created"} ${esc(when)}</div></div><div></div>`;
+    const b=document.createElement("button");b.className="secondary-button";b.textContent=currentGame?.id===row.game_id?"CURRENT":"OPEN";b.disabled=currentGame?.id===row.game_id;
+    b.addEventListener("click",async()=>{$("seasonArchiveModal").classList.add("hidden");await openGameById(row.game_id);});
+    item.lastElementChild.appendChild(b);list.appendChild(item);
+  });
+}
+function closeSeasonArchive(){$("seasonArchiveModal").classList.add("hidden");}
+
 function setSeasonTab(tab){
-  const isCommissioner=currentGame?.commissioner_user_id===currentAuthUser?.id;if(tab==="results"&&!isCommissioner) tab="leaderboard";currentSeasonTab=tab;
+  const isCommissioner=currentGame?.commissioner_user_id===currentAuthUser?.id;const isArchived=currentGame?.status==="archived";if(tab==="results"&&(!isCommissioner||isArchived)) tab="leaderboard";currentSeasonTab=tab;
   const map={leaderboard:"leaderboardPanel",board:"finalBoardPanel",results:"resultsPanel"};
   Object.entries(map).forEach(([key,id])=>$(id).classList.toggle("hidden",key!==tab));
   $("leaderboardTab").classList.toggle("active",tab==="leaderboard");$("finalBoardTab").classList.toggle("active",tab==="board");$("resultsTab").classList.toggle("active",tab==="results");
@@ -1198,6 +1331,21 @@ $("refreshSeasonButton").addEventListener("click",()=>loadFullState());
 $("seasonRejoinKeyButton").addEventListener("click",showMyRejoinKey);
 $("seasonRecoveryAdminButton").addEventListener("click",commissionerResetSeatKey);
 $("seasonCommissionerButton").addEventListener("click",openCommissionerControls);
+$("archiveSeasonButton").addEventListener("click",archiveCurrentSeason);
+$("createNextSeasonButton").addEventListener("click",openNextSeasonModal);
+$("openNextSeasonButton").addEventListener("click",openNextSeason);
+$("openPreviousSeasonButton").addEventListener("click",openPreviousSeason);
+$("seasonArchiveButton").addEventListener("click",openSeasonArchive);
+$("roomPreviousSeasonButton").addEventListener("click",openPreviousSeason);
+$("draftPreviousSeasonButton").addEventListener("click",openPreviousSeason);
+$("roomArchiveButton").addEventListener("click",openSeasonArchive);
+$("draftArchiveButton").addEventListener("click",openSeasonArchive);
+$("homeArchiveButton").addEventListener("click",openSeasonArchive);
+$("confirmNextSeasonButton").addEventListener("click",createNextSeason);
+$("cancelNextSeasonButton").addEventListener("click",closeNextSeasonModal);
+$("closeSeasonArchiveButton").addEventListener("click",closeSeasonArchive);
+$("nextSeasonModal").addEventListener("click",e=>{if(e.target===$("nextSeasonModal"))closeNextSeasonModal();});
+$("seasonArchiveModal").addEventListener("click",e=>{if(e.target===$("seasonArchiveModal"))closeSeasonArchive();});
 $("copySeasonCodeButton").addEventListener("click",()=>copyGameCode("seasonMessage"));
 $("reopenDraftButton").addEventListener("click",async()=>{
   if(currentGame.commissioner_user_id!==currentAuthUser?.id) return;
@@ -1244,6 +1392,10 @@ function closeCommissionerControls(){$("commissionerModal").classList.add("hidde
 function renderCommissionerControls(){
   if(!currentGame) return;
   $("adminGameState").textContent="Game state: "+String(currentGame.status||"").replaceAll("_"," ").toUpperCase();
+  if(currentGame.status==="archived"){
+    $("adminSeatGrid").innerHTML='<div class="admin-seat"><div class="seat-number">ARCHIVED</div><h4>Historical season is read-only</h4><div class="presence-offline">Use the Season Hub or My Seasons to view this archive.</div></div>';
+    $("adminPauseResumeButton").disabled=true;return;
+  }
   const pr=$("adminPauseResumeButton");
   if(currentGame.status==="paused"){pr.textContent="RESUME DRAFT";pr.disabled=false;pr.className="main-button";}
   else if(currentGame.status==="drafting"){pr.textContent="PAUSE DRAFT";pr.disabled=false;pr.className="danger-button";}

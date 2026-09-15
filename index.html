@@ -78,6 +78,20 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
 @media(max-width:620px){.setup-fields{grid-template-columns:1fr}.setup-header{flex-direction:column}.setup-modal-card{padding:18px}.pool-textarea{min-height:170px}}
 
 @media(max-width:760px){h1{font-size:40px}.choice-grid,.seats,.order-panel,.summary-grid{grid-template-columns:1fr}.room-header,.draft-header,.season-header{flex-direction:column}.room-meta,.draft-meta,.season-meta{text-align:left}.game-code{font-size:28px}.screen,#draftScreen,#seasonScreen{padding:18px}.on-clock{font-size:30px}.action-row{flex-direction:column;align-items:stretch}.result-slot{grid-template-columns:1fr}.season-actions{justify-content:flex-start}}
+
+/* EXPORT & SEASON REPORT */
+.export-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
+.export-option{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:left}
+.export-option h4{font-size:15px;margin-bottom:6px}
+.export-option p{font-size:12px;line-height:1.45;color:var(--muted);margin-bottom:12px}
+.export-option button{width:100%}
+.export-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
+.export-stat{background:#091522;border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center}
+.export-stat strong{display:block;font-size:20px;color:var(--green);margin-top:3px}
+.export-stat span{font-size:10px;color:var(--muted);letter-spacing:.08em}
+.export-message{min-height:20px;margin-top:12px;font-size:13px;color:var(--muted)}
+@media(max-width:700px){.export-grid{grid-template-columns:1fr}.export-summary{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -302,6 +316,7 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
       <button id="openNextSeasonButton" class="main-button hidden">OPEN NEXT SEASON</button>
       <button id="openPreviousSeasonButton" class="secondary-button hidden">PREVIOUS SEASON</button>
       <button id="seasonArchiveButton" class="secondary-button">MY SEASONS</button>
+      <button id="seasonExportButton" class="main-button">EXPORT / REPORT</button>
       <button id="refreshSeasonButton" class="secondary-button">REFRESH HUB</button>
       <button id="copySeasonCodeButton" class="secondary-button">COPY CODE</button>
       <button id="seasonRejoinKeyButton" class="secondary-button">MY REJOIN KEY</button>
@@ -349,6 +364,25 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
     </div>
   </div>
 </section>
+
+<div id="seasonExportModal" class="modal-backdrop hidden">
+  <div class="modal-card admin-modal">
+    <div class="green-label">EXPORT & SEASON REPORT</div>
+    <h3 id="exportSeasonTitle">Season exports</h3>
+    <p class="recovery-note">Download clean data files or generate a print-ready season report. “Print / Save PDF” opens your browser print dialog, where you can choose Save as PDF.</p>
+    <div id="exportSummary" class="export-summary"></div>
+    <div class="export-grid">
+      <div class="export-option"><h4>Full Season Report</h4><p>Leaderboard, final draft board, official results and detailed scoring breakdown in one presentation-ready report.</p><button id="printSeasonReportButton" class="main-button">PRINT / SAVE PDF</button></div>
+      <div class="export-option"><h4>Leaderboard CSV</h4><p>Current rank, points, correct predictions, exact positions and Exclusive Lock bonuses.</p><button id="downloadLeaderboardButton" class="secondary-button">DOWNLOAD LEADERBOARD</button></div>
+      <div class="export-option"><h4>Final Draft Board CSV</h4><p>Every category and ranked slot alongside all three managers' final selections and lock markers.</p><button id="downloadDraftBoardButton" class="secondary-button">DOWNLOAD DRAFT BOARD</button></div>
+      <div class="export-option"><h4>Official Results CSV</h4><p>All season outcomes entered by the Commissioner, including ranked result slots.</p><button id="downloadResultsButton" class="secondary-button">DOWNLOAD RESULTS</button></div>
+      <div class="export-option"><h4>Scoring Breakdown CSV</h4><p>Pick-by-pick scoring audit showing base points, exact bonuses, lock bonuses and total points.</p><button id="downloadScoringButton" class="secondary-button">DOWNLOAD SCORING</button></div>
+      <div class="export-option"><h4>Season Backup JSON</h4><p>A machine-readable snapshot of the game, players, categories, picks, results, leaderboard and scoring.</p><button id="downloadBackupButton" class="secondary-button">DOWNLOAD BACKUP</button></div>
+    </div>
+    <div id="exportMessage" class="export-message"></div>
+    <div class="modal-actions"><button id="closeSeasonExportButton" class="secondary-button">CLOSE</button></div>
+  </div>
+</div>
 
 <div id="rejoinKeyModal" class="modal-backdrop hidden">
   <div class="modal-card">
@@ -542,6 +576,7 @@ let categories=[];
 let picks=[];
 let seasonResults=[];
 let leaderboard=[];
+let scoringBreakdown=[];
 let seasonClubs=[];
 let editingSetupCategoryId=null;
 let currentSeasonTab="leaderboard";
@@ -834,18 +869,19 @@ async function restoreRoomIfPossible(){
 
 async function loadFullState(gameId=currentGame?.id){
   if(!gameId) return;
-  const [gameRes,playersRes,catsRes,picksRes,resultsRes,leaderRes,clubsRes]=await Promise.all([
+  const [gameRes,playersRes,catsRes,picksRes,resultsRes,leaderRes,scoreRes,clubsRes]=await Promise.all([
     db.from("games").select("*").eq("id",gameId).single(),
     db.from("players").select("*").eq("game_id",gameId).order("seat_number"),
     db.from("categories").select("*").eq("game_id",gameId).order("category_order"),
     db.from("picks").select("*").eq("game_id",gameId).order("draft_sequence"),
     db.from("category_results").select("*").eq("game_id",gameId).order("category_id").order("result_slot"),
     db.from("draft_leaderboard").select("*").eq("game_id",gameId).order("total_points",{ascending:false}).order("seat_number"),
+    db.from("draft_scoring_breakdown").select("*").eq("game_id",gameId).order("seat_number").order("category_id"),
     db.from("season_clubs").select("*").eq("game_id",gameId).order("pool_code").order("sort_order")
   ]);
-  const err=gameRes.error||playersRes.error||catsRes.error||picksRes.error||resultsRes.error||leaderRes.error||clubsRes.error;
+  const err=gameRes.error||playersRes.error||catsRes.error||picksRes.error||resultsRes.error||leaderRes.error||scoreRes.error||clubsRes.error;
   if(err){console.error(err);if($("draftMessage")) showDraftMessage(err.message,true);if($("seasonMessage")) showSeasonMessage(err.message,true);return;}
-  currentGame=gameRes.data;roomPlayers=playersRes.data||[];categories=catsRes.data||[];picks=picksRes.data||[];seasonResults=resultsRes.data||[];leaderboard=leaderRes.data||[];seasonClubs=clubsRes.data||[];
+  currentGame=gameRes.data;roomPlayers=playersRes.data||[];categories=catsRes.data||[];picks=picksRes.data||[];seasonResults=resultsRes.data||[];leaderboard=leaderRes.data||[];scoringBreakdown=scoreRes.data||[];seasonClubs=clubsRes.data||[];
   const fresh=roomPlayers.find(p=>p.user_id===currentAuthUser.id);
   if(fresh) currentPlayer=fresh;
   else if(currentPlayer){
@@ -1492,6 +1528,110 @@ async function deleteSetupCategory(id){
   setupMsg("Category deleted.",false,true);await loadFullState();renderSeasonSetup();
 }
 
+
+function openSeasonExport(){
+  if(!currentGame||!currentPlayer) return;
+  $("exportSeasonTitle").textContent=(currentGame.game_name||"Football Draft")+" — Exports";
+  const resolved=categories.filter(c=>{
+    const needed=c.category_type==="unique"?1:Number(c.picks_per_gm);
+    return seasonResults.filter(r=>r.category_id===c.id).length>=needed;
+  }).length;
+  $("exportSummary").innerHTML=`
+    <div class="export-stat"><span>MANAGERS</span><strong>${roomPlayers.length}</strong></div>
+    <div class="export-stat"><span>RESULTS ENTERED</span><strong>${seasonResults.length}/${expectedResultSlots()}</strong></div>
+    <div class="export-stat"><span>CATEGORIES RESOLVED</span><strong>${resolved}/${categories.length}</strong></div>`;
+  $("exportMessage").textContent=currentGame.status==="archived"?"Archived season — exports are a read-only historical snapshot.":"Exports reflect the current saved database state.";
+  $("seasonExportModal").classList.remove("hidden");
+}
+function closeSeasonExport(){ $("seasonExportModal").classList.add("hidden"); }
+function exportMsg(message,isError=false){
+  const el=$("exportMessage");el.textContent=message||"";el.style.color=isError?"#ff7878":"#5ee28a";
+}
+function exportFileBase(){
+  const raw=(currentGame?.game_name||"football-draft-season").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+  return raw||"football-draft-season";
+}
+function csvCell(value){
+  const s=String(value??"");
+  return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+}
+function csvFromRows(rows){ return "\uFEFF"+rows.map(row=>row.map(csvCell).join(",")).join("\r\n"); }
+function downloadText(filename,text,mime="text/plain;charset=utf-8"){
+  const blob=new Blob([text],{type:mime});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function rankedLeaderboardRows(){
+  const sorted=[...leaderboard].sort((a,b)=>Number(b.total_points)-Number(a.total_points)||Number(a.seat_number)-Number(b.seat_number));
+  let previous=null,rank=0;
+  return sorted.map((row,idx)=>{const pts=Number(row.total_points);if(previous===null||pts!==previous)rank=idx+1;previous=pts;return {...row,rank};});
+}
+function downloadLeaderboardCSV(){
+  const rows=[["Rank","Seat","Manager","Points","Correct predictions","Exact positions","Lock bonus points"]];
+  rankedLeaderboardRows().forEach(r=>rows.push([r.rank,r.seat_number,r.display_name,r.total_points,r.correct_predictions,r.exact_positions,r.lock_bonus_points]));
+  downloadText(exportFileBase()+"-leaderboard.csv",csvFromRows(rows),"text/csv;charset=utf-8");exportMsg("Leaderboard CSV downloaded.");
+}
+function finalBoardRows(){
+  const rows=[["Category group","Category","Position / slot",...(roomPlayers.sort((a,b)=>a.seat_number-b.seat_number).map(p=>p.display_name))]];
+  categories.forEach(cat=>{
+    const slots=cat.category_type==="unique"?1:Number(cat.picks_per_gm);const labels=Array.isArray(cat.position_labels)?cat.position_labels:[];
+    for(let slot=1;slot<=slots;slot++){
+      const slotLabel=cat.category_type==="ranked_positional"?(labels[slot-1]||("Position "+slot)):cat.category_type==="multi_unique"?("Selection "+slot):"";
+      const values=roomPlayers.sort((a,b)=>a.seat_number-b.seat_number).map(player=>{
+        const p=picks.find(x=>x.category_id===cat.id&&x.player_id===player.id&&(cat.category_type==="unique"?true:Number(x.position_number)===slot));
+        return p?(p.nominee+(p.exclusive_lock?" [EXCLUSIVE LOCK]":"")):"";
+      });
+      rows.push([cat.category_group,cat.category_name,slotLabel,...values]);
+    }
+  });
+  return rows;
+}
+function downloadDraftBoardCSV(){downloadText(exportFileBase()+"-final-draft-board.csv",csvFromRows(finalBoardRows()),"text/csv;charset=utf-8");exportMsg("Final Draft Board CSV downloaded.");}
+function resultsRows(){
+  const rows=[["Category group","Category","Result slot","Position / label","Official result"]];
+  categories.forEach(cat=>{
+    const slots=cat.category_type==="unique"?1:Number(cat.picks_per_gm);const labels=Array.isArray(cat.position_labels)?cat.position_labels:[];
+    for(let slot=1;slot<=slots;slot++){
+      const result=seasonResults.find(r=>r.category_id===cat.id&&Number(r.result_slot)===slot);
+      const label=cat.category_type==="ranked_positional"?(labels[slot-1]||("Position "+slot)):cat.category_type==="multi_unique"?("Result "+slot):"Actual result";
+      rows.push([cat.category_group,cat.category_name,slot,label,result?.result_value||""]);
+    }
+  });return rows;
+}
+function downloadResultsCSV(){downloadText(exportFileBase()+"-official-results.csv",csvFromRows(resultsRows()),"text/csv;charset=utf-8");exportMsg("Official Results CSV downloaded.");}
+function scoringRows(){
+  const rows=[["Seat","Manager","Category group","Category","Nominee","Position","Exclusive lock","Matched result","Exact match","Base points","Exact bonus","Lock bonus","Total points"]];
+  [...scoringBreakdown].sort((a,b)=>Number(a.seat_number)-Number(b.seat_number)||String(a.category_group).localeCompare(String(b.category_group))||String(a.category_name).localeCompare(String(b.category_name))||Number(a.position_number||0)-Number(b.position_number||0)).forEach(s=>{
+    rows.push([s.seat_number,s.display_name,s.category_group,s.category_name,s.nominee,s.position_label||"",s.exclusive_lock?"Yes":"No",s.any_match?"Yes":"No",s.exact_match?"Yes":"No",s.base_points,s.exact_bonus_points,s.lock_bonus_points,s.total_points]);
+  });return rows;
+}
+function downloadScoringCSV(){downloadText(exportFileBase()+"-scoring-breakdown.csv",csvFromRows(scoringRows()),"text/csv;charset=utf-8");exportMsg("Scoring Breakdown CSV downloaded.");}
+function downloadSeasonBackup(){
+  const payload={exported_at:new Date().toISOString(),game:currentGame,players:roomPlayers,categories,picks,results:seasonResults,leaderboard,scoring_breakdown:scoringBreakdown,club_pools:seasonClubs};
+  downloadText(exportFileBase()+"-backup.json",JSON.stringify(payload,null,2),"application/json;charset=utf-8");exportMsg("Season Backup JSON downloaded.");
+}
+function reportTable(headers,rows){
+  return `<table><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map(v=>`<td>${esc(v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
+function printSeasonReport(){
+  const win=window.open("","_blank");if(!win){return exportMsg("Your browser blocked the report window. Allow pop-ups for this site and try again.",true);}
+  const ranks=rankedLeaderboardRows();const top=ranks.length?ranks[0].total_points:0;const leaders=ranks.filter(r=>Number(r.total_points)===Number(top)).map(r=>r.display_name);
+  const entered=seasonResults.length,total=expectedResultSlots();
+  const board=finalBoardRows();const resultRowsData=resultsRows();const score=scoringRows();
+  const generated=new Date().toLocaleString();
+  const statusLabel=String(currentGame.status||"").replace(/_/g," ").toUpperCase();
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc(currentGame.game_name)} — Season Report</title><style>
+    @page{size:A4 landscape;margin:12mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#111827;margin:0;font-size:10px}h1{font-size:24px;margin:0 0 4px}h2{font-size:16px;margin:24px 0 8px;border-bottom:2px solid #111827;padding-bottom:5px}h3{font-size:12px;margin:16px 0 6px}.meta{color:#4b5563;margin-bottom:16px}.hero{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}.card{border:1px solid #cbd5e1;border-radius:8px;padding:10px}.label{font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.08em}.value{font-size:18px;font-weight:700;margin-top:3px}table{width:100%;border-collapse:collapse;margin:6px 0 16px;page-break-inside:auto}tr{page-break-inside:avoid;page-break-after:auto}th{background:#e2e8f0;text-align:left}th,td{border:1px solid #cbd5e1;padding:5px;vertical-align:top}.group{font-weight:700;background:#f1f5f9}.note{color:#475569;font-size:9px}.section{page-break-before:auto}.break{page-break-before:always}.no-print{position:fixed;right:14px;top:14px}@media print{.no-print{display:none}}
+  </style></head><body><button class="no-print" onclick="window.print()">Print / Save PDF</button>
+  <h1>${esc(currentGame.game_name)}</h1><div class="meta">Football Intelligence Draft • Game code ${esc(currentGame.game_code)} • ${esc(statusLabel)} • Generated ${esc(generated)}</div>
+  <div class="hero"><div class="card"><div class="label">Leader${leaders.length===1?"":"s"}</div><div class="value">${esc(leaders.join(", ")||"—")}</div><div class="note">${Number(top)} points</div></div><div class="card"><div class="label">Results entered</div><div class="value">${entered} / ${total}</div><div class="note">Official result slots</div></div><div class="card"><div class="label">Managers</div><div class="value">${roomPlayers.length}</div><div class="note">${esc(roomPlayers.sort((a,b)=>a.seat_number-b.seat_number).map(p=>p.display_name).join(" • "))}</div></div></div>
+  <h2>Leaderboard</h2>${reportTable(["Rank","GM","Points","Correct","Exact","Lock bonus"],ranks.map(r=>[r.rank,r.display_name,r.total_points,r.correct_predictions,r.exact_positions,r.lock_bonus_points]))}
+  <h2>Final Draft Board</h2>${reportTable(board[0],board.slice(1))}
+  <div class="break"></div><h2>Official Results</h2>${reportTable(resultRowsData[0],resultRowsData.slice(1))}
+  <h2>Scoring Breakdown</h2>${reportTable(score[0],score.slice(1))}
+  <p class="note"><strong>Scoring:</strong> standard single prediction = 5 pts; EPL Top 5 = 1 pt for being in the Top 5 + 1 pt for exact position; relegation = 2 pts for being relegated + 1 pt for exact position; Best 3 New Signings = 3 pts per correct selection; Exclusive Lock = +1 when its exact ranked position is correct.</p>
+  </body></html>`;
+  win.document.open();win.document.write(html);win.document.close();win.focus();setTimeout(()=>win.print(),500);exportMsg("Season report opened in a print-ready window.");
+}
+
 function setSeasonTab(tab){
   const isCommissioner=currentGame?.commissioner_user_id===currentAuthUser?.id;const isArchived=currentGame?.status==="archived";if(tab==="results"&&(!isCommissioner||isArchived)) tab="leaderboard";currentSeasonTab=tab;
   const map={leaderboard:"leaderboardPanel",board:"finalBoardPanel",results:"resultsPanel"};
@@ -1512,6 +1652,15 @@ $("refreshSeasonButton").addEventListener("click",()=>loadFullState());
 $("seasonRejoinKeyButton").addEventListener("click",showMyRejoinKey);
 $("seasonRecoveryAdminButton").addEventListener("click",commissionerResetSeatKey);
 $("seasonCommissionerButton").addEventListener("click",openCommissionerControls);
+$("seasonExportButton").addEventListener("click",openSeasonExport);
+$("closeSeasonExportButton").addEventListener("click",closeSeasonExport);
+$("seasonExportModal").addEventListener("click",e=>{if(e.target===$("seasonExportModal"))closeSeasonExport();});
+$("printSeasonReportButton").addEventListener("click",printSeasonReport);
+$("downloadLeaderboardButton").addEventListener("click",downloadLeaderboardCSV);
+$("downloadDraftBoardButton").addEventListener("click",downloadDraftBoardCSV);
+$("downloadResultsButton").addEventListener("click",downloadResultsCSV);
+$("downloadScoringButton").addEventListener("click",downloadScoringCSV);
+$("downloadBackupButton").addEventListener("click",downloadSeasonBackup);
 $("archiveSeasonButton").addEventListener("click",archiveCurrentSeason);
 $("createNextSeasonButton").addEventListener("click",openNextSeasonModal);
 $("openNextSeasonButton").addEventListener("click",openNextSeason);

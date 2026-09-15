@@ -93,6 +93,25 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
 @media(max-width:700px){.export-grid{grid-template-columns:1fr}.export-summary{grid-template-columns:1fr}}
 
 
+
+/* OPTIONAL PICK COUNTDOWN TIMER */
+.pick-countdown{display:none;margin:14px auto 0;width:max-content;min-width:150px;padding:10px 16px;border-radius:999px;border:1px solid #2f7550;background:#0d2520;color:var(--green);font:700 24px/1 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:1px}
+.pick-countdown.visible{display:block}
+.pick-countdown.warning{border-color:#806d2b;background:#2a2411;color:var(--amber)}
+.pick-countdown.expired{border-color:#7d3542;background:#2b151b;color:var(--red)}
+.pick-countdown-note{font-family:Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:.8px;margin-top:5px;font-weight:bold}
+.mobile-timer{font-weight:bold;color:var(--green);margin-left:8px}
+.mobile-timer.warning{color:var(--amber)}
+.mobile-timer.expired{color:var(--red)}
+.admin-timer-panel{border:1px solid var(--line);background:#091522;border-radius:12px;padding:15px;margin:0 0 16px}
+.admin-timer-title{font-size:12px;letter-spacing:1px;color:#9fc5e6;font-weight:bold;margin-bottom:7px}
+.admin-timer-status{font-size:12px;color:#9baabd;margin-bottom:11px;line-height:1.4}
+.admin-timer-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.admin-timer-input{width:145px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:white;font-size:14px}
+.admin-timer-input:focus{outline:none;border-color:var(--green)}
+.admin-timer-help{font-size:10px;color:#6e849b;margin-top:8px;line-height:1.4}
+@media(max-width:620px){.pick-countdown{font-size:20px;padding:9px 13px}.admin-timer-controls{align-items:stretch}.admin-timer-input{width:100%}.admin-timer-controls button{flex:1}}
+
 /* MOBILE UX + DRAFT PROGRESS + RECENT ACTIVITY */
 .draft-progress-shell{display:grid;grid-template-columns:minmax(220px,1fr) minmax(220px,1fr);gap:12px;margin-bottom:18px}
 .progress-card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 16px;min-width:0}
@@ -334,7 +353,7 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
     </div>
 
     <div id="mobileTurnBar" class="mobile-turn-bar">
-      <div class="mobile-turn-top"><span id="mobileTurnRound">ROUND —</span><span id="mobileTurnProgress">0%</span></div>
+      <div class="mobile-turn-top"><span id="mobileTurnRound">ROUND —</span><span><span id="mobileTurnProgress">0%</span><span id="mobileTurnTimer" class="mobile-timer hidden"></span></span></div>
       <div id="mobileTurnName" class="mobile-turn-name">Waiting for draft state…</div>
     </div>
 
@@ -357,6 +376,7 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
     <div class="clock-panel">
       <div id="draftRoundInfo" class="round-info">ROUND 1 • CATEGORY SELECTION</div>
       <div id="draftClockName" class="on-clock">— IS ON THE CLOCK</div>
+      <div id="draftCountdown" class="pick-countdown"><div id="draftCountdownTime">00:00</div><div id="draftCountdownNote" class="pick-countdown-note">PICK TIMER</div></div>
       <div id="draftPickInfo" class="pick-info">Waiting for draft state…</div>
 
       <div id="pickActionBox" class="action-box hidden">
@@ -565,6 +585,16 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
         <button id="adminPauseResumeButton" class="danger-button">PAUSE DRAFT</button>
         <button id="adminRefreshButton" class="secondary-button">REFRESH</button>
       </div>
+    </div>
+    <div class="admin-timer-panel">
+      <div class="admin-timer-title">OPTIONAL PICK TIMER</div>
+      <div id="adminTimerStatus" class="admin-timer-status">No timer configured.</div>
+      <div class="admin-timer-controls">
+        <input id="adminTimerSeconds" class="admin-timer-input" type="number" min="15" max="3600" step="5" placeholder="e.g. 90">
+        <button id="adminSaveTimerButton" class="main-button">SAVE TIMER</button>
+        <button id="adminDisableTimerButton" class="secondary-button">NO TIMER</button>
+      </div>
+      <div class="admin-timer-help">15–3600 seconds. Changing the timer during a live turn restarts that turn with the new duration. The timer is advisory only: reaching 00:00 never auto-picks or skips a GM. Pausing clears the countdown; resuming starts a fresh full timer.</div>
     </div>
     <div id="adminSeatGrid" class="admin-seat-grid"></div>
     <div class="admin-note">Release/Reassign is available for Seats 2–3 only. During a live draft, pause the draft first. Reassignment preserves every historical pick made from that seat.</div>
@@ -1089,6 +1119,73 @@ async function copyGameCode(messageId){
   try{await navigator.clipboard.writeText(currentGame.game_code);$(messageId).textContent="Game code copied.";}catch{$(messageId).textContent="Game code: "+currentGame.game_code;}
 }
 
+let draftCountdownInterval=null;
+
+function timerDurationLabel(seconds){
+  const n=Number(seconds||0);
+  if(!n) return "No timer";
+  if(n%60===0) return (n/60)+" minute"+(n===60?"":"s");
+  if(n>60) return Math.floor(n/60)+"m "+(n%60)+"s";
+  return n+" seconds";
+}
+
+function countdownParts(){
+  const configured=Number(currentGame?.pick_timer_seconds||0);
+  if(!configured) return {enabled:false,remaining:0,expired:false};
+  if(currentGame?.status==="paused") return {enabled:true,paused:true,remaining:configured,expired:false};
+  if(currentGame?.status!=="drafting" || !currentGame?.turn_deadline) return {enabled:true,waiting:true,remaining:configured,expired:false};
+  const remaining=Math.max(0,Math.ceil((new Date(currentGame.turn_deadline).getTime()-Date.now())/1000));
+  return {enabled:true,remaining,expired:remaining<=0};
+}
+
+function formatTimerSeconds(seconds){
+  const s=Math.max(0,Number(seconds||0));
+  const m=Math.floor(s/60);
+  const r=s%60;
+  return String(m).padStart(2,"0")+":"+String(r).padStart(2,"0");
+}
+
+function updateCountdownDisplay(){
+  const main=$("draftCountdown"), time=$("draftCountdownTime"), note=$("draftCountdownNote"), mobile=$("mobileTurnTimer");
+  if(!main||!time||!note||!mobile) return;
+  const t=countdownParts();
+  main.classList.remove("visible","warning","expired");
+  mobile.classList.remove("warning","expired");
+  if(!t.enabled || currentGame?.status==="archived" || currentGame?.status==="season_complete" || currentGame?.status==="draft_complete"){
+    mobile.classList.add("hidden");
+    return;
+  }
+  if(t.paused){
+    main.classList.add("visible");
+    time.textContent="PAUSED";note.textContent="TIMER PAUSED";
+    mobile.textContent=" • PAUSED";mobile.classList.remove("hidden");
+    return;
+  }
+  if(t.waiting){
+    main.classList.add("visible");
+    time.textContent=formatTimerSeconds(Number(currentGame.pick_timer_seconds||0));note.textContent="PICK TIMER";
+    mobile.textContent=" • "+time.textContent;mobile.classList.remove("hidden");
+    return;
+  }
+  const label=formatTimerSeconds(t.remaining);
+  time.textContent=label;
+  mobile.textContent=" • "+label;mobile.classList.remove("hidden");
+  main.classList.add("visible");
+  if(t.expired){
+    main.classList.add("expired");mobile.classList.add("expired");note.textContent="TIME EXPIRED • PICK STILL OPEN";
+  }else if(t.remaining<=10){
+    main.classList.add("warning");mobile.classList.add("warning");note.textContent="PICK TIMER";
+  }else{
+    note.textContent="PICK TIMER";
+  }
+}
+
+function ensureCountdownTicker(){
+  if(draftCountdownInterval) return;
+  draftCountdownInterval=setInterval(updateCountdownDisplay,250);
+}
+ensureCountdownTicker();
+
 function renderDraft(){
   $("draftGameName").textContent=currentGame.game_name;$("draftGameCode").textContent=currentGame.game_code;$("draftUserName").textContent=currentPlayer.display_name;$("draftSeat").textContent=currentPlayer.seat_number;
   $("boardSeat1").textContent=playerBySeat(1)?.display_name||"Seat 1";$("boardSeat2").textContent=playerBySeat(2)?.display_name||"Seat 2";$("boardSeat3").textContent=playerBySeat(3)?.display_name||"Seat 3";
@@ -1103,7 +1200,7 @@ function renderDraft(){
   if(state?.complete){
     $("draftCompleteBanner").textContent=isCommissioner?"DRAFT COMPLETE — review the board, undo anything necessary, then lock the draft to open the Season Hub.":"DRAFT COMPLETE — waiting for the Commissioner to lock the board and open the Season Hub.";
   }
-  renderClock(state);renderOrder(state);renderDraftProgress(state);renderRecentActivity(state);renderCategories(state);renderBoard();
+  renderClock(state);renderOrder(state);renderDraftProgress(state);renderRecentActivity(state);renderCategories(state);renderBoard();updateCountdownDisplay();
   if(currentGame.status==="paused"){
     $("pickActionBox").classList.add("hidden");
     $("draftRoundInfo").textContent="DRAFT PAUSED";
@@ -1953,6 +2050,13 @@ function closeCommissionerControls(){$("commissionerModal").classList.add("hidde
 function renderCommissionerControls(){
   if(!currentGame) return;
   $("adminGameState").textContent="Game state: "+String(currentGame.status||"").replaceAll("_"," ").toUpperCase();
+  const timerSeconds=Number(currentGame.pick_timer_seconds||0);
+  if($("adminTimerStatus")) $("adminTimerStatus").textContent=timerSeconds?("Current timer: "+timerDurationLabel(timerSeconds)+" per turn."):"Current timer: OFF (no countdown).";
+  if($("adminTimerSeconds")) $("adminTimerSeconds").value=timerSeconds||"";
+  const timerLocked=["archived","season_complete","draft_complete"].includes(currentGame.status);
+  if($("adminTimerSeconds")) $("adminTimerSeconds").disabled=timerLocked;
+  if($("adminSaveTimerButton")) $("adminSaveTimerButton").disabled=timerLocked;
+  if($("adminDisableTimerButton")) $("adminDisableTimerButton").disabled=timerLocked;
   if(currentGame.status==="archived"){
     $("adminSeatGrid").innerHTML='<div class="admin-seat"><div class="seat-number">ARCHIVED</div><h4>Historical season is read-only</h4><div class="presence-offline">Use the Season Hub or My Seasons to view this archive.</div></div>';
     $("adminPauseResumeButton").disabled=true;return;
@@ -1979,6 +2083,24 @@ function renderCommissionerControls(){
     grid.appendChild(card);
   }
 }
+async function adminSetPickTimer(seconds){
+  if(!currentGame || currentGame.commissioner_user_id!==currentAuthUser?.id) return;
+  const value=Number(seconds||0);
+  if(value!==0 && (!Number.isInteger(value) || value<15 || value>3600)){
+    return adminMsg("Timer must be between 15 and 3600 seconds, or choose NO TIMER.",true);
+  }
+  const r=await db.rpc("commissioner_set_pick_timer",{p_game_id:currentGame.id,p_seconds:value});
+  if(r.error) return adminMsg(r.error.message,true);
+  adminMsg(value?("Pick timer set to "+timerDurationLabel(value)+". Current live turn restarted if applicable."):"Pick timer disabled.",false,true);
+  await loadFullState();renderCommissionerControls();updateCountdownDisplay();
+}
+
+async function adminSaveTimer(){
+  const raw=$("adminTimerSeconds").value.trim();
+  if(!raw) return adminMsg("Enter a duration in seconds, or choose NO TIMER.",true);
+  await adminSetPickTimer(Number(raw));
+}
+
 async function adminPauseResume(){
   if(currentGame.status==="drafting"){
     if(!confirm("Pause the live draft? No player will be able to make a pick until you resume.")) return;
@@ -2010,7 +2132,10 @@ async function adminReassignSeat(seat,currentName){
   showRejoinKeyModal(key,"Seat "+seat+" Reassignment Key","Send this key privately to "+name+". They should choose RECOVER MY SEAT, enter the game code, Seat "+seat+", and this key.");adminMsg("Seat "+seat+" prepared for "+name+".",false,true);await loadFullState();renderCommissionerControls();
 }
 $("adminPauseResumeButton").addEventListener("click",adminPauseResume);
-$("adminRefreshButton").addEventListener("click",async()=>{await loadFullState();renderCommissionerControls();});
+$("adminSaveTimerButton").addEventListener("click",adminSaveTimer);
+$("adminDisableTimerButton").addEventListener("click",()=>adminSetPickTimer(0));
+$("adminTimerSeconds").addEventListener("keypress",e=>{if(e.key==="Enter")adminSaveTimer();});
+$("adminRefreshButton").addEventListener("click",async()=>{await loadFullState();renderCommissionerControls();updateCountdownDisplay();});
 $("closeCommissionerButton").addEventListener("click",closeCommissionerControls);
 $("commissionerModal").addEventListener("click",e=>{if(e.target===$("commissionerModal"))closeCommissionerControls();});
 

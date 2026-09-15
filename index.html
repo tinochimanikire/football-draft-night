@@ -23,12 +23,13 @@ h1{font-size:56px;margin-bottom:15px}.subtitle{color:#a8b6c7;font-size:19px;marg
 .secondary-button{background:var(--panel2);color:#d9e5f0;border:1px solid var(--line)}.secondary-button:hover{border-color:var(--green)}
 .danger-button{background:transparent;color:var(--red);border:1px solid #56313a}.danger-button:hover{border-color:var(--red)}
 button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color:#8fa6bf;margin:16px 0 24px}
-.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:25px}.choice-card{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:26px;text-align:left}
+.choice-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:25px}.choice-card{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:26px;text-align:left}
 .choice-card h3{margin-bottom:8px}.choice-card p{color:#8fa6bf;font-size:14px;line-height:1.5;margin-bottom:18px}
 .form-panel{margin-top:22px;text-align:left}.field{margin-bottom:15px}.field label{display:block;color:#a8b6c7;font-size:13px;margin-bottom:7px}
 .field input,.nominee-input{width:100%;padding:14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:white;font-size:16px}
 .field input:focus,.nominee-input:focus{outline:none;border-color:var(--green)}.nominee-select{width:100%;padding:14px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:white;font-size:16px}.nominee-select:focus{outline:none;border-color:var(--green)}.selection-help{font-size:11px;color:#6e849b;margin-top:8px;line-height:1.4}.form-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
 .error{color:var(--red);font-size:13px;margin-top:14px;min-height:18px}.success{color:var(--green)}footer{margin-top:36px;color:#53677d;font-size:13px}
+.rejoin-key{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:28px;letter-spacing:3px;font-weight:bold;color:var(--green);padding:14px;background:var(--bg);border:1px solid var(--line);border-radius:10px;margin:14px 0}.recovery-note{font-size:12px;color:#8fa6bf;line-height:1.5}.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:20px;z-index:100}.modal-card{width:min(560px,100%);background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px;text-align:left}.modal-card h3{margin-bottom:8px}.modal-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
 
 /* Lobby room */
 #roomScreen{display:none;align-items:flex-start}.room-wrap{width:100%;max-width:1120px;margin:0 auto;padding-top:34px}
@@ -71,7 +72,7 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
     <div class="card">
       <div class="green-label">MULTIPLAYER LOBBY</div>
       <h2>Build or Join a War Room</h2>
-      <p class="muted" style="margin-top:10px">Create the draft as Commissioner, or join an existing game using its code.</p>
+      <p class="muted" style="margin-top:10px">Create a draft, join a new seat, or recover your existing seat on a new browser/device.</p>
       <div id="supabaseStatus" class="auth-status">Connecting to Supabase…</div>
 
       <div class="choice-grid">
@@ -84,6 +85,11 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
           <h3>Join a Draft</h3>
           <p>Enter the game code from the Commissioner. You will take the next available seat.</p>
           <button id="showJoinButton" class="secondary-button">JOIN WAR ROOM</button>
+        </div>
+        <div class="choice-card">
+          <h3>Recover My Seat</h3>
+          <p>Lost your browser session or changed device? Reclaim your existing seat with your saved Rejoin Key.</p>
+          <button id="showRecoverButton" class="secondary-button">RECOVER SEAT</button>
         </div>
       </div>
 
@@ -106,6 +112,17 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
           <button id="cancelJoinButton" class="secondary-button">CANCEL</button>
         </div>
         <div id="joinError" class="error"></div>
+      </div>
+
+      <div id="recoverPanel" class="form-panel hidden">
+        <div class="field"><label>Game code</label><input id="recoverGameCode" maxlength="10" placeholder="e.g. NYUFW3"></div>
+        <div class="field"><label>Your seat number</label><input id="recoverSeatNumber" type="number" min="1" max="3" placeholder="1, 2 or 3"></div>
+        <div class="field"><label>Rejoin Key</label><input id="recoverKey" maxlength="20" placeholder="e.g. Q7KM-4P2X-9RTA"></div>
+        <div class="form-actions">
+          <button id="recoverSeatButton" class="main-button">RECOVER MY SEAT</button>
+          <button id="cancelRecoverButton" class="secondary-button">CANCEL</button>
+        </div>
+        <div id="recoverError" class="error"></div>
       </div>
     </div>
     <footer>Football Draft Night • Commissioner Edition</footer>
@@ -145,6 +162,8 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
         <button id="readyButton" class="main-button">I'M READY</button>
         <button id="startDraftButton" class="main-button hidden">START DRAFT</button>
         <button id="refreshRoomButton" class="secondary-button">REFRESH ROOM</button>
+        <button id="roomRejoinKeyButton" class="secondary-button">MY REJOIN KEY</button>
+        <button id="roomRecoveryAdminButton" class="danger-button hidden">RESET SEAT KEY</button>
       </div>
       <div id="roomMessage" class="room-message"></div>
       <div class="start-note">Each GM should use a separate browser profile/device. Ordinary tabs share the same anonymous Supabase identity.</div>
@@ -206,6 +225,8 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
           <button id="undoPickButton" class="danger-button hidden">UNDO LAST ACTION</button>
           <button id="refreshDraftButton" class="secondary-button">REFRESH BOARD</button>
           <button id="copyDraftCodeButton" class="secondary-button">COPY CODE</button>
+          <button id="draftRejoinKeyButton" class="secondary-button">MY REJOIN KEY</button>
+          <button id="draftRecoveryAdminButton" class="danger-button hidden">RESET SEAT KEY</button>
         </div>
         <div class="panel-title">LIVE DRAFT BOARD</div>
         <div class="board-wrap">
@@ -244,6 +265,8 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
       <button id="reopenDraftButton" class="danger-button hidden">REOPEN DRAFT</button>
       <button id="refreshSeasonButton" class="secondary-button">REFRESH HUB</button>
       <button id="copySeasonCodeButton" class="secondary-button">COPY CODE</button>
+      <button id="seasonRejoinKeyButton" class="secondary-button">MY REJOIN KEY</button>
+      <button id="seasonRecoveryAdminButton" class="danger-button hidden">RESET SEAT KEY</button>
     </div>
 
     <div id="seasonSummary" class="summary-grid"></div>
@@ -286,6 +309,19 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
     </div>
   </div>
 </section>
+
+<div id="rejoinKeyModal" class="modal-backdrop hidden">
+  <div class="modal-card">
+    <div class="green-label">SEAT RECOVERY</div>
+    <h3 id="rejoinModalTitle">Save your Rejoin Key</h3>
+    <p id="rejoinModalText" class="recovery-note">Keep this somewhere outside this browser. You can use it to reclaim your seat if you change device, clear browser data, or lose your session.</p>
+    <div id="rejoinKeyValue" class="rejoin-key"></div>
+    <div class="modal-actions">
+      <button id="copyRejoinKeyButton" class="main-button">COPY KEY</button>
+      <button id="closeRejoinKeyButton" class="secondary-button">I'VE SAVED IT</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -470,17 +506,90 @@ function showScreen(which){
   $("seasonScreen").style.display=which==="season"?"block":"none";
 }
 function setPanels(which){
-  $("createPanel").classList.add("hidden");$("joinPanel").classList.add("hidden");
+  $("createPanel").classList.add("hidden");$("joinPanel").classList.add("hidden");$("recoverPanel").classList.add("hidden");
   if(which==="create") $("createPanel").classList.remove("hidden");
   if(which==="join") $("joinPanel").classList.remove("hidden");
+  if(which==="recover") $("recoverPanel").classList.remove("hidden");
 }
 
 $("showCreateButton").addEventListener("click",()=>{setPanels("create");if(!$("createGameCode").value) $("createGameCode").value=generateGameCode();$("createName").focus();});
 $("showJoinButton").addEventListener("click",()=>{setPanels("join");$("joinName").focus();});
+$("showRecoverButton").addEventListener("click",()=>{setPanels("recover");$("recoverGameCode").focus();});
 $("cancelCreateButton").addEventListener("click",()=>setPanels(null));
 $("cancelJoinButton").addEventListener("click",()=>setPanels(null));
+$("cancelRecoverButton").addEventListener("click",()=>setPanels(null));
 $("joinGameCode").addEventListener("input",e=>e.target.value=cleanCode(e.target.value));
 $("createGameCode").addEventListener("input",e=>e.target.value=cleanCode(e.target.value));
+$("recoverGameCode").addEventListener("input",e=>e.target.value=cleanCode(e.target.value));
+
+function rejoinStorageKey(gameId){return `footballDraftRejoinKey:${gameId}`;}
+function normalizeRejoinKey(value){return String(value||"").toUpperCase().replace(/[^A-Z0-9]/g,"");}
+function generateRejoinKey(){
+  const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes=new Uint32Array(12);crypto.getRandomValues(bytes);
+  const raw=Array.from(bytes,n=>alphabet[n%alphabet.length]).join("");
+  return raw.match(/.{1,4}/g).join("-");
+}
+function showRejoinKeyModal(key,title="Save your Rejoin Key",text="Keep this somewhere outside this browser. You can use it to reclaim your seat if you change device, clear browser data, or lose your session."){
+  $("rejoinModalTitle").textContent=title;$("rejoinModalText").textContent=text;$("rejoinKeyValue").textContent=key;$("rejoinKeyModal").classList.remove("hidden");
+}
+function hideRejoinKeyModal(){$("rejoinKeyModal").classList.add("hidden");}
+async function provisionRecoveryKey(gameId,forceShow=false){
+  if(!gameId||!currentAuthUser) return;
+  const status=await db.rpc("has_my_rejoin_key",{p_game_id:gameId});
+  if(status.error){console.warn("Recovery status check failed",status.error);return;}
+  let key=localStorage.getItem(rejoinStorageKey(gameId));
+  if(!status.data){
+    if(!key) key=generateRejoinKey();
+    const set=await db.rpc("set_my_rejoin_key",{p_game_id:gameId,p_rejoin_key:key});
+    if(set.error){console.warn("Could not create rejoin key",set.error);return;}
+    localStorage.setItem(rejoinStorageKey(gameId),key);
+    showRejoinKeyModal(key,"Save your Rejoin Key");
+  }else if(forceShow && key){
+    showRejoinKeyModal(key,"Your Rejoin Key");
+  }
+}
+async function showMyRejoinKey(){
+  if(!currentGame) return;
+  let key=localStorage.getItem(rejoinStorageKey(currentGame.id));
+  if(key){showRejoinKeyModal(key,"Your Rejoin Key");return;}
+  const ok=confirm("This browser does not have a saved copy of your Rejoin Key. Generate a replacement key now? Any older key for your seat will stop working.");
+  if(!ok) return;
+  key=generateRejoinKey();
+  const res=await db.rpc("set_my_rejoin_key",{p_game_id:currentGame.id,p_rejoin_key:key});
+  if(res.error){alert(res.error.message);return;}
+  localStorage.setItem(rejoinStorageKey(currentGame.id),key);
+  showRejoinKeyModal(key,"New Rejoin Key","This replaces any previous Rejoin Key for your seat. Save it somewhere safe.");
+}
+async function recoverSeat(){
+  const code=cleanCode($("recoverGameCode").value);const seat=Number($("recoverSeatNumber").value);const key=$("recoverKey").value.trim();const box=$("recoverError");box.textContent="";
+  if(!currentAuthUser) return box.textContent="Supabase is still authenticating.";
+  if(!code) return box.textContent="Enter the game code.";
+  if(![1,2,3].includes(seat)) return box.textContent="Enter seat 1, 2 or 3.";
+  if(normalizeRejoinKey(key).length<8) return box.textContent="Enter your Rejoin Key.";
+  $("recoverSeatButton").disabled=true;$("recoverSeatButton").textContent="RECOVERING…";
+  try{
+    const res=await db.rpc("reclaim_player_seat",{p_game_code:code,p_seat_number:seat,p_rejoin_key:key});
+    if(res.error) throw res.error;
+    const data=res.data||{};const gameId=data.game_id;if(!gameId) throw new Error("Seat recovery did not return a game ID.");
+    localStorage.setItem("footballDraftGameId",gameId);localStorage.setItem(rejoinStorageKey(gameId),key.toUpperCase());
+    await loadFullState(gameId);subscribeToGame();showRejoinKeyModal(key.toUpperCase(),"Seat recovered","This key remains your recovery credential for this seat. Keep it safe.");
+  }catch(err){console.error(err);box.textContent=err.message||"Could not recover the seat.";}
+  finally{$("recoverSeatButton").disabled=false;$("recoverSeatButton").textContent="RECOVER MY SEAT";}
+}
+async function commissionerResetSeatKey(){
+  if(!currentGame||currentGame.commissioner_user_id!==currentAuthUser?.id) return;
+  const seat=Number(prompt("Which seat needs a new Rejoin Key? Enter 1, 2 or 3:"));if(![1,2,3].includes(seat)) return;
+  const player=playerBySeat(seat);if(!player){alert("That seat is empty.");return;}
+  const key=generateRejoinKey();
+  const res=await db.rpc("commissioner_reset_rejoin_key",{p_game_id:currentGame.id,p_seat_number:seat,p_new_rejoin_key:key});
+  if(res.error){alert(res.error.message);return;}
+  if(player.user_id===currentAuthUser.id) localStorage.setItem(rejoinStorageKey(currentGame.id),key);
+  showRejoinKeyModal(key,`New key for ${player.display_name}`,`Send this key privately to ${player.display_name}. They can use RECOVER SEAT with game code ${currentGame.game_code} and Seat ${seat}.`);
+}
+$("copyRejoinKeyButton").addEventListener("click",async()=>{const key=$("rejoinKeyValue").textContent;try{await navigator.clipboard.writeText(key);$("copyRejoinKeyButton").textContent="COPIED";setTimeout(()=>$("copyRejoinKeyButton").textContent="COPY KEY",1200);}catch(e){}});
+$("closeRejoinKeyButton").addEventListener("click",hideRejoinKeyModal);
+$("recoverSeatButton").addEventListener("click",recoverSeat);
 
 async function createGame(){
   const name=$("createName").value.trim();
@@ -503,6 +612,7 @@ async function createGame(){
     if(playerInsert.error) throw playerInsert.error;
     currentPlayer=playerInsert.data;
     localStorage.setItem("footballDraftGameId",gameId);
+    await provisionRecoveryKey(gameId);
     await loadFullState(gameId);
     subscribeToGame();
   }catch(err){
@@ -545,6 +655,7 @@ async function joinGame(){
 
     currentPlayer=player;
     localStorage.setItem("footballDraftGameId",gameFetch.data.id);
+    await provisionRecoveryKey(gameFetch.data.id);
     await loadFullState(gameFetch.data.id);
     subscribeToGame();
   }catch(err){console.error(err);box.textContent=err.message||"Could not join the draft.";}
@@ -561,6 +672,7 @@ async function restoreRoomIfPossible(){
     const player=await db.from("players").select("*").eq("game_id",gameId).eq("user_id",currentAuthUser.id).maybeSingle();
     if(player.error||!player.data){localStorage.removeItem("footballDraftGameId");return;}
     currentPlayer=player.data;
+    await provisionRecoveryKey(gameId);
     await loadFullState(gameId);
     subscribeToGame();
   }catch(err){console.warn("Could not restore room",err);}
@@ -613,6 +725,7 @@ function renderRoomControls(){
   const allSeatsFilled=roomPlayers.length===3,allReady=allSeatsFilled&&roomPlayers.every(p=>p.is_ready);
   $("readyButton").textContent=currentPlayer?.is_ready?"NOT READY":"I'M READY";
   $("startDraftButton").classList.toggle("hidden",!isCommissioner);$("startDraftButton").disabled=!allReady||currentGame.status!=="lobby";
+  $("roomRecoveryAdminButton").classList.toggle("hidden",!isCommissioner);
   const banner=$("gameStatusBanner");banner.classList.remove("live");
   if(!allSeatsFilled) banner.textContent="Waiting for "+(3-roomPlayers.length)+" more manager"+((3-roomPlayers.length)===1?"":"s")+".";
   else if(!allReady) banner.textContent="All managers have joined. Waiting for everyone to mark READY.";
@@ -630,6 +743,8 @@ $("startDraftButton").addEventListener("click",async()=>{
   if(res.error) $("roomMessage").textContent=res.error.message;else await loadFullState();
 });
 $("refreshRoomButton").addEventListener("click",()=>loadFullState());
+$("roomRejoinKeyButton").addEventListener("click",showMyRejoinKey);
+$("roomRecoveryAdminButton").addEventListener("click",commissionerResetSeatKey);
 $("copyCodeButton").addEventListener("click",()=>copyGameCode("roomMessage"));
 $("copyDraftCodeButton").addEventListener("click",()=>copyGameCode("draftMessage"));
 async function copyGameCode(messageId){
@@ -883,6 +998,8 @@ $("undoPickButton").addEventListener("click",async()=>{
 });
 
 $("refreshDraftButton").addEventListener("click",()=>loadFullState());
+$("draftRejoinKeyButton").addEventListener("click",showMyRejoinKey);
+$("draftRecoveryAdminButton").addEventListener("click",commissionerResetSeatKey);
 
 
 function resultFor(catId,slot=1){
@@ -902,28 +1019,35 @@ function renderSeasonHub(){
   const isCommissioner=currentGame.commissioner_user_id===currentAuthUser?.id;
   $("resultsTab").classList.toggle("hidden",!isCommissioner);
   $("reopenDraftButton").classList.toggle("hidden",!isCommissioner);
+  $("seasonRecoveryAdminButton").classList.toggle("hidden",!isCommissioner);
   if(!isCommissioner && currentSeasonTab==="results") currentSeasonTab="leaderboard";
   renderSeasonSummary();renderLeaderboard();renderFinalBoard();renderResultsEditor();setSeasonTab(currentSeasonTab);
 }
 function renderSeasonSummary(){
-  const leader=[...leaderboard].sort((a,b)=>Number(b.total_points)-Number(a.total_points)||Number(a.seat_number)-Number(b.seat_number))[0];
+  const sorted=[...leaderboard].sort((a,b)=>Number(b.total_points)-Number(a.total_points)||Number(a.seat_number)-Number(b.seat_number));
+  const topPoints=sorted.length?Number(sorted[0].total_points):0;
+  const leaders=sorted.filter(x=>Number(x.total_points)===topPoints);
+  const leaderLabel=leaders.length>1?leaders.map(x=>x.display_name).join(", "):(leaders[0]?.display_name||"—");
+  const leaderSub=leaders.length>1?`Tied on ${topPoints} points`:(leaders.length?`${topPoints} points`:"No results scored yet");
   const entered=seasonResults.length,total=expectedResultSlots();
   const completeCategories=categories.filter(c=>{
     const needed=c.category_type==="unique"?1:Number(c.picks_per_gm);
     return seasonResults.filter(r=>r.category_id===c.id).length>=needed;
   }).length;
   $("seasonSummary").innerHTML=`
-    <div class="summary-card"><div class="summary-label">CURRENT LEADER</div><div class="summary-value">${esc(leader?.display_name||"—")}</div><div class="summary-sub">${leader?Number(leader.total_points)+" points":"No results scored yet"}</div></div>
+    <div class="summary-card"><div class="summary-label">${leaders.length>1?"CURRENT LEADERS":"CURRENT LEADER"}</div><div class="summary-value">${esc(leaderLabel)}</div><div class="summary-sub">${esc(leaderSub)}</div></div>
     <div class="summary-card"><div class="summary-label">RESULT SLOTS ENTERED</div><div class="summary-value">${entered} / ${total}</div><div class="summary-sub">Updates the leaderboard immediately</div></div>
     <div class="summary-card"><div class="summary-label">CATEGORIES RESOLVED</div><div class="summary-value">${completeCategories} / ${categories.length}</div><div class="summary-sub">Season progress</div></div>`;
 }
 function renderLeaderboard(){
   const body=$("leaderboardBody");body.innerHTML="";
-  const sorted=[...leaderboard].sort((a,b)=>Number(b.total_points)-Number(a.total_points)||Number(b.correct_predictions)-Number(a.correct_predictions)||Number(a.seat_number)-Number(b.seat_number));
+  const sorted=[...leaderboard].sort((a,b)=>Number(b.total_points)-Number(a.total_points)||Number(a.seat_number)-Number(b.seat_number));
+  let previousPoints=null,rank=0;
   sorted.forEach((row,idx)=>{
+    const points=Number(row.total_points);if(previousPoints===null||points!==previousPoints) rank=idx+1;previousPoints=points;
     const tr=document.createElement("tr");
-    const medal=idx===0?"🥇":idx===1?"🥈":"🥉";
-    tr.innerHTML=`<td class="rank-medal">${medal}</td><td><strong>${esc(row.display_name)}</strong></td><td class="points-big">${Number(row.total_points)}</td><td>${Number(row.correct_predictions)}</td><td>${Number(row.exact_positions)}</td><td>${Number(row.lock_bonus_points)}</td>`;
+    const medal=rank===1?"🥇":rank===2?"🥈":rank===3?"🥉":`#${rank}`;
+    tr.innerHTML=`<td class="rank-medal">${medal}</td><td><strong>${esc(row.display_name)}</strong></td><td class="points-big">${points}</td><td>${Number(row.correct_predictions)}</td><td>${Number(row.exact_positions)}</td><td>${Number(row.lock_bonus_points)}</td>`;
     body.appendChild(tr);
   });
 }
@@ -1019,6 +1143,8 @@ $("leaderboardTab").addEventListener("click",()=>setSeasonTab("leaderboard"));
 $("finalBoardTab").addEventListener("click",()=>setSeasonTab("board"));
 $("resultsTab").addEventListener("click",()=>setSeasonTab("results"));
 $("refreshSeasonButton").addEventListener("click",()=>loadFullState());
+$("seasonRejoinKeyButton").addEventListener("click",showMyRejoinKey);
+$("seasonRecoveryAdminButton").addEventListener("click",commissionerResetSeatKey);
 $("copySeasonCodeButton").addEventListener("click",()=>copyGameCode("seasonMessage"));
 $("reopenDraftButton").addEventListener("click",async()=>{
   if(currentGame.commissioner_user_id!==currentAuthUser?.id) return;

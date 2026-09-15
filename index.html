@@ -217,6 +217,27 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
   .progress-value{white-space:normal;text-align:right}
 }
 
+
+
+/* LOBBY DRAFT ORDER DRAW */
+.draft-draw-panel{margin-top:22px;padding:20px;border:1px solid #263b52;border-radius:14px;background:#0c1725}
+.draft-draw-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:14px}
+.draft-draw-title{font-weight:800;font-size:16px;letter-spacing:.5px}
+.draft-draw-note{color:#8fa6bf;font-size:13px;line-height:1.45;margin-top:4px}
+.draft-order-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.draft-order-slot{border:1px solid #263b52;border-radius:10px;padding:14px;text-align:center;background:#101d2e}
+.draft-order-slot.first{border-color:#5ee28a;background:#122639}
+.draft-order-rank{font-size:11px;letter-spacing:1.4px;color:#7aa9d6;margin-bottom:5px}
+.draft-order-name{font-weight:800;font-size:16px}
+.draft-order-lock{font-size:12px;color:#5ee28a;margin-top:5px}
+.draft-order-waiting{color:#6f8499;font-weight:700}
+#drawDraftOrderButton{white-space:nowrap}
+@media(max-width:700px){
+  .draft-draw-head{flex-direction:column}
+  .draft-order-preview{grid-template-columns:1fr}
+  #drawDraftOrderButton{width:100%}
+}
+
 </style>
 </head>
 <body>
@@ -225,8 +246,8 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
 <section id="homeScreen" class="screen">
   <div class="container">
     <div class="logo">FOOTPRINTS ON THE MOON</div>
-    <h1>GAME OF TSOTSO</h1>
-    <p class="subtitle">Three managers. The SS. Strategic insight. Only one will be crowned three-eyed raven.</p>
+    <h1>Game of Tsotso</h1>
+    <p class="subtitle">Three managers. The SS. Strategic insight. Only one will be crowned 3 eyed raven.</p>
 
     <div class="card">
       <div class="green-label">MULTIPLAYER LOBBY</div>
@@ -237,7 +258,7 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
       <div class="choice-grid">
         <div class="choice-card">
           <h3>Create a Draft</h3>
-          <p>You become Commissioner and take Seat 1. The prediction categories are created automatically.</p>
+          <p>You become Commissioner. The draft order is drawn in the lobby once all three managers have joined.</p>
           <button id="showCreateButton" class="main-button">CREATE WAR ROOM</button>
         </div>
         <div class="choice-card">
@@ -321,6 +342,23 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
         <div id="seat2" class="seat"><div class="seat-number">SEAT 2</div><div class="seat-name">Waiting…</div><div class="seat-status">● EMPTY</div></div>
         <div id="seat3" class="seat"><div class="seat-number">SEAT 3</div><div class="seat-name">Waiting…</div><div class="seat-status">● EMPTY</div></div>
       </div>
+
+      <div class="draft-draw-panel">
+        <div class="draft-draw-head">
+          <div>
+            <div class="green-label" style="margin-bottom:6px">DRAFT ORDER DRAW</div>
+            <div class="draft-draw-title" id="draftOrderTitle">Order not drawn yet</div>
+            <div class="draft-draw-note" id="draftOrderNote">Once all three managers have joined, the Commissioner draws the order once. The result is then locked for the season.</div>
+          </div>
+          <button id="drawDraftOrderButton" class="main-button hidden">DRAW DRAFT ORDER</button>
+        </div>
+        <div id="lobbyDraftOrder" class="draft-order-preview">
+          <div class="draft-order-slot"><div class="draft-order-rank">1ST PICK</div><div class="draft-order-name draft-order-waiting">Awaiting draw</div></div>
+          <div class="draft-order-slot"><div class="draft-order-rank">2ND PICK</div><div class="draft-order-name draft-order-waiting">Awaiting draw</div></div>
+          <div class="draft-order-slot"><div class="draft-order-rank">3RD PICK</div><div class="draft-order-name draft-order-waiting">Awaiting draw</div></div>
+        </div>
+      </div>
+
       <div class="room-actions">
         <button id="readyButton" class="main-button">I'M READY</button>
         <button id="startDraftButton" class="main-button hidden">START DRAFT</button>
@@ -764,9 +802,18 @@ function categoryPicks(catId){return picks.filter(p=>p.category_id===catId);}
 function pickFor(catId,playerId,positionNumber=null){
   return picks.find(p=>p.category_id===catId && p.player_id===playerId && (positionNumber===null ? true : p.position_number===positionNumber))||null;
 }
-function firstSeatForRound(round){return ((round-1)%3)+1;}
+function baseDraftOrder(){
+  const order=Array.isArray(currentGame?.draft_order)?currentGame.draft_order.map(Number):[];
+  return order.length===3?order:[1,2,3];
+}
+function firstSeatForRound(round){
+  const order=baseDraftOrder();
+  return order[(Number(round)-1)%3];
+}
 function seatSequence(firstSeat,reverse=false){
-  const forward=[firstSeat,((firstSeat)%3)+1,((firstSeat+1)%3)+1];
+  const base=baseDraftOrder();
+  const start=Math.max(0,base.indexOf(Number(firstSeat)));
+  const forward=[base[start],base[(start+1)%3],base[(start+2)%3]];
   return reverse ? [forward[2],forward[1],forward[0]] : forward;
 }
 function isMultiType(cat){return cat && (cat.category_type==="ranked_positional" || cat.category_type==="multi_unique");}
@@ -1115,8 +1162,25 @@ function routeView(){
 
 function renderRoom(){
   $("roomGameName").textContent=currentGame.game_name;$("roomGameCode").textContent=currentGame.game_code;$("roomUserName").textContent=currentPlayer.display_name;
-  $("roomRole").textContent=currentGame.commissioner_user_id===currentAuthUser.id?"Commissioner • Seat 1":"Manager • Seat "+currentPlayer.seat_number;
-  renderSeats();renderRoomControls();
+  $("roomRole").textContent=(currentGame.commissioner_user_id===currentAuthUser.id?"Commissioner":"Manager")+" • Seat "+currentPlayer.seat_number;
+  renderSeats();renderLobbyDraftOrder();renderRoomControls();
+}
+function renderLobbyDraftOrder(){
+  const box=$("lobbyDraftOrder");
+  if(!box) return;
+  const order=Array.isArray(currentGame?.draft_order)?currentGame.draft_order.map(Number):[];
+  const drawn=order.length===3;
+  box.innerHTML="";
+  for(let i=0;i<3;i++){
+    const seat=drawn?order[i]:null;
+    const p=seat?playerBySeat(seat):null;
+    const card=document.createElement("div");
+    card.className="draft-order-slot"+(i===0&&drawn?" first":"");
+    card.innerHTML='<div class="draft-order-rank">'+(i===0?"1ST PICK":i===1?"2ND PICK":"3RD PICK")+'</div><div class="draft-order-name '+(!drawn?'draft-order-waiting':'')+'">'+esc(drawn?(p?.display_name||("Seat "+seat)):"Awaiting draw")+'</div>'+(drawn?'<div class="draft-order-lock">LOCKED • SEAT '+seat+'</div>':'');
+    box.appendChild(card);
+  }
+  $("draftOrderTitle").textContent=drawn?"Draft order locked":"Order not drawn yet";
+  $("draftOrderNote").textContent=drawn?"Round 1 starts in this order. Category leadership then rotates each round; multi-pick categories still snake.":"Once all three managers have joined, the Commissioner draws the order once. The result is then locked for the season.";
 }
 function renderSeats(){
   for(let seatNo=1;seatNo<=3;seatNo++){
@@ -1130,16 +1194,20 @@ function renderSeats(){
 function renderRoomControls(){
   const isCommissioner=currentGame.commissioner_user_id===currentAuthUser.id;
   const allSeatsFilled=roomPlayers.length===3,allReady=allSeatsFilled&&roomPlayers.every(p=>p.is_ready);
+  const orderDrawn=Array.isArray(currentGame?.draft_order)&&currentGame.draft_order.length===3;
   $("readyButton").textContent=currentPlayer?.is_ready?"NOT READY":"I'M READY";
-  $("startDraftButton").classList.toggle("hidden",!isCommissioner);$("startDraftButton").disabled=!allReady||currentGame.status!=="lobby";
+  $("drawDraftOrderButton").classList.toggle("hidden",!isCommissioner||orderDrawn||currentGame.status!=="lobby");
+  $("drawDraftOrderButton").disabled=!allSeatsFilled;
+  $("startDraftButton").classList.toggle("hidden",!isCommissioner);$("startDraftButton").disabled=!allReady||!orderDrawn||currentGame.status!=="lobby";
   $("roomRecoveryAdminButton").classList.toggle("hidden",!isCommissioner);
   $("roomCommissionerButton").classList.toggle("hidden",!isCommissioner);
   $("roomSeasonSetupButton").classList.toggle("hidden",!(isCommissioner&&currentGame.status==="lobby"));
   $("roomPreviousSeasonButton").classList.toggle("hidden",!currentGame.previous_game_id);
   const banner=$("gameStatusBanner");banner.classList.remove("live");
   if(!allSeatsFilled) banner.textContent="Waiting for "+(3-roomPlayers.length)+" more manager"+((3-roomPlayers.length)===1?"":"s")+".";
-  else if(!allReady) banner.textContent="All managers have joined. Waiting for everyone to mark READY.";
-  else {banner.textContent=isCommissioner?"All managers are READY. You can start the draft.":"All managers are READY. Waiting for the Commissioner to start.";banner.classList.add("live");}
+  else if(!orderDrawn) banner.textContent=isCommissioner?"All managers have joined. Draw the draft order.":"All managers have joined. Waiting for the Commissioner to draw the draft order.";
+  else if(!allReady) banner.textContent="Draft order locked. Waiting for everyone to mark READY.";
+  else {banner.textContent=isCommissioner?"Draft order locked and all managers are READY. You can start the draft.":"All managers are READY. Waiting for the Commissioner to start.";banner.classList.add("live");}
 }
 
 $("readyButton").addEventListener("click",async()=>{
@@ -1147,13 +1215,25 @@ $("readyButton").addEventListener("click",async()=>{
   const res=await db.from("players").update({is_ready:!currentPlayer.is_ready}).eq("id",currentPlayer.id);
   if(res.error) $("roomMessage").textContent=res.error.message;else {$("roomMessage").textContent="";await loadFullState();}
 });
+$("drawDraftOrderButton").addEventListener("click",async()=>{
+  if(!currentGame||currentGame.commissioner_user_id!==currentAuthUser?.id) return;
+  if(!confirm("Draw the draft order now? This draw is random and will be locked for the season.")) return;
+  $("roomMessage").textContent="Drawing draft order…";
+  $("drawDraftOrderButton").disabled=true;
+  const res=await db.rpc("commissioner_draw_draft_order",{p_game_id:currentGame.id});
+  if(res.error){$("roomMessage").textContent=res.error.message;$("drawDraftOrderButton").disabled=false;return;}
+  await loadFullState();
+  const order=baseDraftOrder().map(seat=>playerBySeat(seat)?.display_name||("Seat "+seat));
+  $("roomMessage").textContent="Draft order locked: 1. "+order[0]+" • 2. "+order[1]+" • 3. "+order[2];
+});
 $("startDraftButton").addEventListener("click",async()=>{
   if(!currentGame) return;
   const missingPools=categories.filter(c=>c.pool_code && !(poolOptions(c.pool_code)||[]).length);
   if(missingPools.length){$("roomMessage").textContent="Season Setup is incomplete: "+missingPools.map(c=>c.category_name).join(", ")+" has no club pool.";return;}
-  if(!confirm("Start the draft? Season Setup will lock for this season once the draft begins.")) return;
+  const order=baseDraftOrder().map(seat=>playerBySeat(seat)?.display_name||("Seat "+seat));
+  if(!confirm("Start the draft with this locked order?\n\n1. "+order[0]+"\n2. "+order[1]+"\n3. "+order[2]+"\n\nSeason Setup will also lock for this season.")) return;
   $("roomMessage").textContent="Starting draft…";
-  const res=await db.from("games").update({status:"drafting"}).eq("id",currentGame.id);
+  const res=await db.rpc("commissioner_start_draft",{p_game_id:currentGame.id});
   if(res.error) $("roomMessage").textContent=res.error.message;else await loadFullState();
 });
 $("refreshRoomButton").addEventListener("click",()=>loadFullState());

@@ -331,6 +331,7 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
         <button id="roomSeasonSetupButton" class="setup-button hidden">SEASON SETUP</button>
         <button id="roomPreviousSeasonButton" class="secondary-button hidden">PREVIOUS SEASON</button>
         <button id="roomArchiveButton" class="secondary-button">MY SEASONS</button>
+        <button id="roomHomeButton" class="secondary-button">HOME / NEW DRAFT</button>
       </div>
       <div id="roomMessage" class="room-message"></div>
       <div class="start-note">Each GM should use a separate browser profile/device. Ordinary tabs share the same anonymous Supabase identity.</div>
@@ -422,6 +423,7 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
           <button id="draftCommissionerButton" class="admin-button hidden">COMMISSIONER CONTROLS</button>
           <button id="draftPreviousSeasonButton" class="secondary-button hidden">PREVIOUS SEASON</button>
           <button id="draftArchiveButton" class="secondary-button">MY SEASONS</button>
+          <button id="draftHomeButton" class="secondary-button">HOME / NEW DRAFT</button>
         </div>
         <div class="panel-title">LIVE DRAFT BOARD</div>
         <div class="board-wrap">
@@ -472,6 +474,7 @@ button:disabled{opacity:.42;cursor:not-allowed}.auth-status{font-size:12px;color
       <button id="seasonRejoinKeyButton" class="secondary-button">MY REJOIN KEY</button>
       <button id="seasonRecoveryAdminButton" class="danger-button hidden">RESET SEAT KEY</button>
       <button id="seasonCommissionerButton" class="admin-button hidden">COMMISSIONER CONTROLS</button>
+      <button id="seasonHomeButton" class="secondary-button">HOME / NEW DRAFT</button>
     </div>
 
     <div id="seasonSummary" class="summary-grid"></div>
@@ -850,6 +853,50 @@ function showScreen(which){
   $("roomScreen").style.display=which==="room"?"flex":"none";
   $("draftScreen").style.display=which==="draft"?"block":"none";
   $("seasonScreen").style.display=which==="season"?"block":"none";
+}
+
+async function returnToStartPage(){
+  const gameName=currentGame?.game_name||"this draft";
+  const ok=confirm(
+    "Return to the start page?\n\n"+
+    "This does NOT delete or leave "+gameName+". Your seat, picks, results and Rejoin Key remain saved. "+
+    "You can reopen it later from MY SEASONS."
+  );
+  if(!ok) return;
+
+  clearTimeout(refreshTimer);
+  refreshTimer=null;
+
+  if(liveChannel){
+    try{await db.removeChannel(liveChannel);}catch(err){console.warn("Could not close realtime channel",err);}
+    liveChannel=null;
+  }
+
+  onlinePlayerIds=new Set();
+
+  // Remove only the automatic-open pointer.
+  // Recovery keys and the actual Supabase game/seat stay untouched.
+  localStorage.removeItem("footballDraftGameId");
+
+  currentGame=null;
+  currentPlayer=null;
+  roomPlayers=[];
+  categories=[];
+  picks=[];
+  seasonResults=[];
+  leaderboard=[];
+  scoringBreakdown=[];
+  seasonClubs=[];
+  editingSetupCategoryId=null;
+  currentSeasonTab="leaderboard";
+
+  setPanels(null);
+  $("createError").textContent="";
+  $("joinError").textContent="";
+  $("recoverError").textContent="";
+  $("createGameCode").value=generateGameCode();
+  showScreen("home");
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 function setPanels(which){
   $("createPanel").classList.add("hidden");$("joinPanel").classList.add("hidden");$("recoverPanel").classList.add("hidden");
@@ -1998,6 +2045,9 @@ $("draftPreviousSeasonButton").addEventListener("click",openPreviousSeason);
 $("roomArchiveButton").addEventListener("click",openSeasonArchive);
 $("draftArchiveButton").addEventListener("click",openSeasonArchive);
 $("homeArchiveButton").addEventListener("click",openSeasonArchive);
+$("roomHomeButton").addEventListener("click",returnToStartPage);
+$("draftHomeButton").addEventListener("click",returnToStartPage);
+$("seasonHomeButton").addEventListener("click",returnToStartPage);
 $("confirmNextSeasonButton").addEventListener("click",createNextSeason);
 $("cancelNextSeasonButton").addEventListener("click",closeNextSeasonModal);
 $("closeSeasonArchiveButton").addEventListener("click",closeSeasonArchive);
